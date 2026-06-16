@@ -40,7 +40,7 @@ export const usePracticeStore = create<State>()(
       settings: {
         voiceEnabled: false,
         bpm: 60,
-        fontSize: 'grande',
+        fontSize: 'normal',
         highContrast: false,
         showHint: false,
         displayMode: 'flashcard',
