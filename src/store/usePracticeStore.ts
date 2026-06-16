@@ -38,7 +38,7 @@ export const usePracticeStore = create<State>()(
   persist(
     (set) => ({
       settings: {
-        voiceEnabled: true,
+        voiceEnabled: false,
         bpm: 60,
         fontSize: 'grande',
         highContrast: false,

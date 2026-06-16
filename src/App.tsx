@@ -23,15 +23,15 @@ export default function App() {
     }
   }, [])
 
-  const themeClass = [
-    fontSize === 'grande' ? 'font-grande' : fontSize === 'enorme' ? 'font-enorme' : '',
-    highContrast ? 'theme-contrast' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.toggle('font-grande', fontSize === 'grande')
+    root.classList.toggle('font-enorme', fontSize === 'enorme')
+    root.classList.toggle('theme-contrast', highContrast)
+  }, [fontSize, highContrast])
 
   return (
-    <div className={themeClass}>
+    <div>
       {showSplash && <SplashScreen exiting={splashExiting} />}
       <div className="mx-auto flex min-h-screen max-w-4xl flex-col px-4">
         <header className="flex items-center justify-between gap-4 py-4">
