@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+/* ============ Tema base (acessível) ============ */
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --text: #1c1b1a;
+  --muted: #6b6a67;
+  --primary: #2b6cb0;
+  --primary-strong: #1e4f86;
+  --success: #1f9d55;
+  --error: #d64545;
+  --border: #e2e0db;
+  /* escala de fonte controlada pela barra de acessibilidade */
+  --font-scale: 1;
+}
+
+/* Alto contraste */
+.theme-contrast {
+  --bg: #000000;
+  --surface: #0d0d0d;
+  --text: #ffffff;
+  --muted: #d9d9d9;
+  --primary: #ffd23f;
+  --primary-strong: #ffe27a;
+  --success: #4ade80;
+  --error: #ff6b6b;
+  --border: #4d4d4d;
+}
+
+/* Escalas de fonte */
+.font-grande { --font-scale: 1.2; }
+.font-enorme { --font-scale: 1.45; }
+
+html {
+  font-size: calc(100% * var(--font-scale));
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Notação musical (VexFlow) em alto contraste: inverte as cores do SVG */
+.theme-contrast .vf-staff svg path,
+.theme-contrast .vf-staff svg rect {
+  fill: var(--text);
+  stroke: var(--text);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-7px); }
+  80% { transform: translateX(7px); }
+}
+.animate-shake { animation: shake 0.4s ease-in-out; }
+
+@keyframes pop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop { animation: pop 0.25s ease-out; }
+
+/* ============ Splash screen ============ */
+@keyframes splash-pop {
+  0% { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.08) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.animate-splash-pop { animation: splash-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@keyframes splash-fade {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-splash-fade { animation: splash-fade 0.6s ease-out 0.2s both; }
+
+@keyframes splash-exit {
+  to { opacity: 0; transform: scale(1.03); }
+}
+.animate-splash-exit { animation: splash-exit 0.35s ease-in forwards; }
