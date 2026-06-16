@@ -49,13 +49,6 @@ body {
   min-height: 100vh;
 }
 
-/* Notação musical (VexFlow) em alto contraste: inverte as cores do SVG */
-.theme-contrast .vf-staff svg path,
-.theme-contrast .vf-staff svg rect {
-  fill: var(--text);
-  stroke: var(--text);
-}
-
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-10px); }

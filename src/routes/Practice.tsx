@@ -194,6 +194,7 @@ export function Practice() {
           clef={piece.clef}
           mode={settings.displayMode}
           highlightColor={FEEDBACK_COLOR[feedback]}
+          textColor={settings.highContrast ? '#ffffff' : '#1c1b1a'}
         />
         {player.countdown > 0 && (
           <div

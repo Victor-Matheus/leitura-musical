@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
+import type { RenderContext } from 'vexflow'
 import type { Note } from '../data/notes'
 import { vexKey } from '../data/notes'
 import type { DisplayMode } from '../store/usePracticeStore'
@@ -11,13 +12,30 @@ interface NoteStaffProps {
   mode: DisplayMode
   /** cor da nota atual (feedback: verde/vermelho/azul). default = primário */
   highlightColor?: string
+  /** cor do texto do tema (pauta, clave, notas não destacadas) — VexFlow desenha com
+   * estilo inline, então o CSS de alto contraste não alcança o SVG; precisa ser passada
+   * explicitamente para a cor correta ser usada no momento do desenho. */
+  textColor: string
 }
 
-function buildStaveNote(note: Note, clef: string, color?: string): StaveNote {
+function buildStaveNote(note: Note, clef: string, color: string): StaveNote {
   const sn = new StaveNote({ keys: [vexKey(note)], duration: note.duration, clef })
   if (note.accidental) sn.addModifier(new Accidental(note.accidental), 0)
-  if (color) sn.setStyle({ fillStyle: color, strokeStyle: color })
+  sn.setStyle({ fillStyle: color, strokeStyle: color })
   return sn
+}
+
+/**
+ * Stave.draw() desenha as linhas da pauta direto no contexto (ctx.stroke()) sem
+ * aplicar this.style, e cada modifier (clave, etc.) tem seu próprio estilo padrão
+ * vindo de Metrics — nenhum dos dois herda stave.setStyle(). Por isso a cor do
+ * tema precisa ser empurrada tanto no contexto quanto em cada modifier.
+ */
+function drawStave(stave: Stave, ctx: RenderContext, textColor: string) {
+  ctx.setFillStyle(textColor)
+  ctx.setStrokeStyle(textColor)
+  stave.getModifiers().forEach((m) => m.setStyle({ fillStyle: textColor, strokeStyle: textColor }))
+  stave.setContext(ctx).draw()
 }
 
 /**
@@ -35,7 +53,14 @@ function makeResponsive(host: HTMLElement, viewW: number, viewH: number) {
   svgEl.style.overflow = 'visible'
 }
 
-export function NoteStaff({ notes, index, clef, mode, highlightColor = '#2b6cb0' }: NoteStaffProps) {
+export function NoteStaff({
+  notes,
+  index,
+  clef,
+  mode,
+  highlightColor = '#2b6cb0',
+  textColor,
+}: NoteStaffProps) {
   const hostRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -56,7 +81,7 @@ export function NoteStaff({ notes, index, clef, mode, highlightColor = '#2b6cb0'
       // y=70 posiciona a pauta no centro do canvas e deixa espaço p/ Dó5, Ré5, etc.
       const stave = new Stave(4, 70, W - 8)
       stave.addClef(clef)
-      stave.setContext(ctx).draw()
+      drawStave(stave, ctx, textColor)
 
       const note = notes[index]
       if (note) {
@@ -77,10 +102,10 @@ export function NoteStaff({ notes, index, clef, mode, highlightColor = '#2b6cb0'
 
       const stave = new Stave(10, 50, W - 30)
       stave.addClef(clef)
-      stave.setContext(ctx).draw()
+      drawStave(stave, ctx, textColor)
 
       const staveNotes = notes.map((n, i) =>
-        buildStaveNote(n, clef, i === index ? highlightColor : undefined),
+        buildStaveNote(n, clef, i === index ? highlightColor : textColor),
       )
       const voice = new Voice().setStrict(false)
       voice.addTickables(staveNotes)
@@ -93,7 +118,7 @@ export function NoteStaff({ notes, index, clef, mode, highlightColor = '#2b6cb0'
       const ratio = notes.length > 1 ? index / (notes.length - 1) : 0
       host.scrollLeft = ratio * (W - host.clientWidth)
     }
-  }, [notes, index, clef, mode, highlightColor])
+  }, [notes, index, clef, mode, highlightColor, textColor])
 
   return (
     <div
