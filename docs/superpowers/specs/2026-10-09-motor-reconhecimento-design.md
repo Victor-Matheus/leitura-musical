@@ -44,6 +44,7 @@ Em `src/engine/useSpeechNotes.ts` e `src/routes/Practice.tsx`:
 | Modo de uso | Aluno fala no andamento; o app não espera. |
 | Critério de acerto | Nome certo dentro da janela da nota (sem medir precisão rítmica). |
 | Motor principal | Vosk (WASM, modelo pt-BR pequeno) com vocabulário restrito às 7 sílabas, condicionado ao spike. |
+| Horário da sílaba | Sempre do `onsetDetector` (no aparelho, imediato). O Vosk só dá horários no resultado final, que sai após um silêncio que pode não ocorrer em andamento rápido. |
 | Plano B | Detector de início de fala no aparelho + Web Speech com consumo incremental. |
 | Relógio | `AudioContext.currentTime` como relógio único para notas e sílabas. |
 | Pulso para o aluno | Visual (indicador por tempo). Sem clique de metrônomo por padrão. |
@@ -57,9 +58,10 @@ Todas as unidades são novas, salvo indicação.
 | `src/audio/micInput.ts` | Abre o microfone (`echoCancellation`, `noiseSuppression`, `autoGainControl`), cria e retoma o `AudioContext` e entrega blocos PCM com o horário de cada bloco no relógio único (via AudioWorklet). | API do navegador |
 | `src/recognition/types.ts` | Interface `NoteRecognizer`: `start()`, `stop()`, evento `syllable { step: Step; onset: number }` (segundos no relógio único), `status: 'loading' \| 'ready' \| 'error'`, e `kind: 'local' \| 'online'`. | — |
 | `src/recognition/syllables.ts` | Normalização e tabela de sinônimos. Substitui `src/engine/noteMatcher.ts`. Só casa palavras inteiras, sem regra de prefixo. | — |
-| `src/recognition/voskRecognizer.ts` | Motor principal. Vosk num Web Worker com gramática `["do","re","mi","fa","sol","la","si","[unk]"]` e horários por palavra ativados. Converte o horário de cada palavra para o relógio único: `onset = inicioDoStream + word.start`. | `micInput`, `vosk-browser` |
+| `src/recognition/voskRecognizer.ts` | Motor principal. Vosk num Web Worker com gramática restrita às sílabas (formas com e sem acento, mais `[unk]`). Emite os nomes a partir dos resultados **parciais**, com consumo incremental, e obtém o `onset` do `onsetDetector` via `aligner`. O `word.start` do resultado final é usado só na página de diagnóstico, para comparação. | `micInput`, `onsetDetector`, `aligner`, `vosk-browser` |
+| `src/recognition/aligner.ts` | Casa nomes com inícios de fala pela ordem: cada nome novo recebe o início mais antigo ainda não usado. Compartilhado pelos dois motores. | — |
 | `src/recognition/onsetDetector.ts` | Detector de início de fala por energia (RMS com limiar adaptativo e tempo mínimo de silêncio entre falas). Emite `onset` no relógio único. | `micInput` |
-| `src/recognition/webSpeechRecognizer.ts` | Plano B. Web Speech com consumo incremental: guarda quantas palavras de cada `resultIndex` já foram emitidas e só emite as novas. Casa cada nome novo, pela ordem, com o início mais antigo ainda não usado do `onsetDetector`. Reinicia sozinho no `onend`. | `onsetDetector`, `syllables` |
+| `src/recognition/webSpeechRecognizer.ts` | Plano B. Web Speech com consumo incremental: guarda quantas palavras de cada `resultIndex` já foram emitidas e só emite as novas, casando-as com inícios via `aligner`. Reinicia sozinho no `onend`. | `onsetDetector`, `aligner`, `syllables` |
 | `src/recognition/selectRecognizer.ts` | Escolhe o motor (Seção 6). | adaptadores |
 | `src/engine/timeline.ts` | **Função pura.** `(notas, bpm, segmentos) → janelas [início, fim)` por nota. Pausa e retomada abrem um novo segmento a partir da nota atual. | — |
 | `src/engine/scorer.ts` | **Função pura.** `(janelas, sílabas) → resultado por nota` (Seção 5). | `timeline` |
