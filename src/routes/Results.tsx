@@ -25,6 +25,8 @@ export function Results() {
   const correct = session.results.filter((r) => r.outcome === 'correct').length
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0
   const seconds = Math.round(session.durationMs / 1000)
+  // Voz ligada mas nada pontuado (motor indisponível): não mostrar "0%".
+  const scored = session.voiceEnabled && session.results.some((r) => r.outcome !== null)
 
   return (
     <div className="flex flex-1 flex-col gap-6 py-2">
@@ -37,7 +39,7 @@ export function Results() {
         </p>
       </div>
 
-      {session.voiceEnabled && (
+      {scored && (
         <Card variant="dark" className="flex flex-col items-center gap-2 text-center">
           <Trophy size={24} strokeWidth={1.75} aria-hidden="true" style={{ color: 'var(--accent)' }} />
           <span className="text-6xl font-extrabold" style={{ color: 'var(--on-dark)' }}>
@@ -68,7 +70,7 @@ export function Results() {
             )
           })}
         </div>
-        {session.voiceEnabled && (
+        {scored && (
           <p className="mt-3 text-base" style={{ color: 'var(--muted)' }}>
             🟩 acertou · 🟥 errou · ⬜ sem resposta
           </p>

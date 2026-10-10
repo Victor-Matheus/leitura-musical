@@ -34,8 +34,15 @@ const ERROR_MESSAGE: Record<RecognizerError, { text: string; critical: boolean; 
   },
 }
 
+/** Voz ligada, mas nenhum motor disponível e nenhum outro erro a explicar. */
+const UNAVAILABLE_MESSAGE = {
+  text: 'Reconhecimento de voz indisponível neste navegador. A lição segue sem voz.',
+  critical: false,
+  icon: TriangleAlert,
+}
+
 export function VoiceFeedback({ listening, error, engine, lastHeard, feedback }: VoiceFeedbackProps) {
-  const message = error ? ERROR_MESSAGE[error] : null
+  const message = error ? ERROR_MESSAGE[error] : engine === 'silent' ? UNAVAILABLE_MESSAGE : null
   const MicIcon = listening ? Mic : MicOff
 
   return (

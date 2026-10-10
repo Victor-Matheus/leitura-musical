@@ -33,4 +33,25 @@ describe('Results', () => {
     expect(screen.getByText('1 de 3 notas certas')).toBeTruthy()
     expect(screen.getByText(/sem resposta/)).toBeTruthy()
   })
+
+  it('voz ligada sem nenhuma nota pontuada não mostra porcentagem', () => {
+    usePracticeStore.setState({
+      lastSession: {
+        pieceTitle: 'Teste',
+        voiceEnabled: true,
+        durationMs: 12000,
+        results: [
+          { note: note('C'), outcome: null },
+          { note: note('D'), outcome: null },
+        ],
+      },
+    })
+    render(
+      <MemoryRouter>
+        <Results />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText(/%/)).toBeNull()
+    expect(screen.queryByText(/notas certas/)).toBeNull()
+  })
 })

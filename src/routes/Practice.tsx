@@ -60,7 +60,8 @@ function PracticeSession({ piece }: { piece: Piece }) {
       saveSession({
         pieceTitle: piece.title,
         results,
-        voiceEnabled: settings.voiceEnabled,
+        // Sem nenhuma nota pontuada (motor indisponível) não há porcentagem a mostrar.
+        voiceEnabled: results.some((r) => r.outcome !== null),
         durationMs,
       })
       navigate('/resultado')
