@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { CheckCircle2, Download } from 'lucide-react'
+import { Button, Card, IconBox } from './ui'
 import { downloadModel, isModelCached } from '../recognition/modelStore'
 
 type Status = 'checking' | 'idle' | 'downloading' | 'done' | 'error' | 'cached'
@@ -32,14 +34,14 @@ export function ModelDownload() {
   if (status === 'checking' || status === 'cached') return null
 
   return (
-    <div
-      className="flex flex-col gap-2 rounded-2xl p-4"
-      style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}
-    >
+    <Card className="flex flex-col gap-2 !p-4">
       {status === 'done' ? (
-        <p className="text-lg font-bold" style={{ color: 'var(--success)' }}>
-          Motor de voz pronto para uso offline
-        </p>
+        <div className="flex items-center gap-3">
+          <IconBox icon={CheckCircle2} />
+          <p className="text-lg font-bold" style={{ color: 'var(--success)' }}>
+            Motor de voz pronto para uso offline
+          </p>
+        </div>
       ) : (
         <>
           {status === 'downloading' ? (
@@ -51,13 +53,9 @@ export function ModelDownload() {
               style={{ accentColor: 'var(--primary)' }}
             />
           ) : (
-            <button
-              onClick={onDownload}
-              className="self-start rounded-2xl px-5 py-3 text-lg font-bold"
-              style={{ background: 'var(--primary)', color: '#fff' }}
-            >
+            <Button icon={Download} className="self-start" onClick={onDownload}>
               Baixar motor de voz (≈ 30 MB)
-            </button>
+            </Button>
           )}
           {status === 'error' && (
             <p className="text-base" style={{ color: 'var(--error)' }}>
@@ -66,6 +64,6 @@ export function ModelDownload() {
           )}
         </>
       )}
-    </div>
+    </Card>
   )
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { Button, Card } from '../components/ui'
 import { createAudioContext, openMic } from '../audio/micInput'
 import type { MicInput } from '../audio/micInput'
 import type { Note, Step } from '../data/notes'
@@ -64,8 +64,6 @@ function meanOnsetDelta(events: SyllableEvent[], wordStarts: number[]): number |
   return deltas.length ? deltas.reduce((a, b) => a + b, 0) / deltas.length : null
 }
 
-const card: CSSProperties = { background: 'var(--surface)', border: '2px solid var(--border)' }
-
 function Choice<T extends string | number>({
   label,
   value,
@@ -91,11 +89,11 @@ function Choice<T extends string | number>({
             disabled={disabled}
             aria-pressed={value === o.value}
             onClick={() => onChange(o.value)}
-            className="rounded-xl px-4 py-2 font-bold disabled:opacity-50"
+            className="rounded-xl px-4 py-2 font-bold transition-all disabled:opacity-50"
             style={{
               background: value === o.value ? 'var(--primary)' : 'var(--surface)',
-              color: value === o.value ? '#fff' : 'var(--text)',
-              border: '2px solid var(--border)',
+              color: value === o.value ? 'var(--on-primary)' : 'var(--text)',
+              border: '1px solid var(--border)',
             }}
           >
             {o.label}
@@ -243,7 +241,7 @@ export function Diagnostico() {
         Diagnóstico do reconhecimento
       </h1>
 
-      <section className="flex flex-col gap-4 rounded-2xl p-4" style={card}>
+      <Card as="section" className="flex flex-col gap-4 !p-4">
         <Choice
           label="Motor"
           value={engine}
@@ -266,14 +264,14 @@ export function Diagnostico() {
         />
         {engine === 'local' && (
           <div className="flex flex-col gap-2">
-            <button
+            <Button
+              variant="secondary"
               onClick={handleDownload}
               disabled={busy || progress !== null}
-              className="self-start rounded-xl px-4 py-2 font-bold disabled:opacity-50"
-              style={{ background: 'var(--surface)', color: 'var(--text)', border: '2px solid var(--border)' }}
+              className="self-start"
             >
               Baixar modelo
-            </button>
+            </Button>
             <span style={{ color: 'var(--muted)' }}>
               {progress !== null
                 ? `Baixando: ${Math.round(progress * 100)}%`
@@ -286,29 +284,20 @@ export function Diagnostico() {
         {engine === 'online' && !hasWebSpeech() && (
           <span style={{ color: 'var(--muted)' }}>Web Speech não está disponível neste navegador.</span>
         )}
-      </section>
+      </Card>
 
-      <section className="flex flex-col gap-3 rounded-2xl p-4" style={card}>
+      <Card as="section" className="flex flex-col gap-3 !p-4">
         <p style={{ color: 'var(--text)' }}>
           Fale cada sílaba no tempo da nota: <strong>{noteLabel}</strong>
         </p>
         <div className="flex gap-3">
-          <button
-            onClick={handleStart}
-            disabled={!canStart}
-            className="rounded-xl px-5 py-3 text-lg font-bold disabled:opacity-50"
-            style={{ background: 'var(--primary)', color: '#fff' }}
-          >
+          <Button onClick={handleStart} disabled={!canStart}>
             Iniciar teste
-          </button>
+          </Button>
           {busy && (
-            <button
-              onClick={handleCancel}
-              className="rounded-xl px-5 py-3 text-lg font-bold"
-              style={{ background: 'var(--surface)', color: 'var(--text)', border: '2px solid var(--border)' }}
-            >
+            <Button variant="secondary" onClick={handleCancel}>
               Cancelar
-            </button>
+            </Button>
           )}
         </div>
         <div aria-live="polite" className="text-center text-5xl font-extrabold" style={{ color: 'var(--text)' }}>
@@ -317,23 +306,23 @@ export function Diagnostico() {
           {player.phase === 'finished' && 'Aguardando o fim…'}
           {!playing && player.phase !== 'finished' && ' '}
         </div>
-      </section>
+      </Card>
 
-      <section className="flex flex-col gap-1 rounded-2xl p-4" style={card}>
+      <Card as="section" className="flex flex-col gap-1 !p-4">
         <div style={{ color: 'var(--text)' }}>Status do reconhecedor: {status}</div>
         <div style={{ color: 'var(--text)' }}>
           Tempo de carga do modelo: {loadSeconds === null ? '—' : `${loadSeconds.toFixed(2)} s`}
         </div>
         <div style={{ color: 'var(--text)' }}>Memória (heap JS): {memory ?? heapMb()}</div>
         {error && (
-          <div role="alert" style={{ color: 'var(--error, #c0392b)' }}>
+          <div role="alert" style={{ color: 'var(--error)' }}>
             {error}
           </div>
         )}
-      </section>
+      </Card>
 
       {report && (
-        <section className="flex flex-col gap-1 rounded-2xl p-4" style={card} aria-live="polite">
+        <Card as="section" className="flex flex-col gap-1 !p-4" aria-live="polite">
           <div className="text-2xl font-extrabold" style={{ color: 'var(--text)' }}>
             {report.approved ? 'APROVADO' : 'REPROVADO'}
           </div>
@@ -348,7 +337,7 @@ export function Diagnostico() {
             </div>
           )}
           <div style={{ color: 'var(--muted)' }}>Critério: p90 &lt; 500 ms e acerto ≥ 90%.</div>
-        </section>
+        </Card>
       )}
     </div>
   )

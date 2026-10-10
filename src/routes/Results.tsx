@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
+import { Trophy } from 'lucide-react'
 import { noteName } from '../data/notes'
+import { Button, Card } from '../components/ui'
 import { usePracticeStore } from '../store/usePracticeStore'
 
 export function Results() {
@@ -12,13 +14,9 @@ export function Results() {
         <p className="text-xl" style={{ color: 'var(--muted)' }}>
           Nenhum resultado ainda.
         </p>
-        <button
-          onClick={() => navigate('/')}
-          className="rounded-2xl px-6 py-3 text-lg font-bold"
-          style={{ background: 'var(--primary)', color: '#fff' }}
-        >
+        <Button variant="cta" size="lg" onClick={() => navigate('/')}>
           Começar uma lição
-        </button>
+        </Button>
       </div>
     )
   }
@@ -29,29 +27,29 @@ export function Results() {
   const seconds = Math.round(session.durationMs / 1000)
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-6 py-4">
-      <h1 className="text-3xl font-extrabold" style={{ color: 'var(--text)' }}>
-        Fim da lição! 🎉
-      </h1>
-      <p className="text-lg" style={{ color: 'var(--muted)' }}>
-        {session.pieceTitle} · {seconds}s
-      </p>
+    <div className="flex flex-1 flex-col gap-6 py-2">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-extrabold" style={{ color: 'var(--text)' }}>
+          Fim da lição! 🎉
+        </h1>
+        <p className="text-lg" style={{ color: 'var(--muted)' }}>
+          {session.pieceTitle} · {seconds}s
+        </p>
+      </div>
 
       {session.voiceEnabled && (
-        <div
-          className="flex flex-col items-center rounded-3xl px-10 py-6"
-          style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}
-        >
-          <span className="text-6xl font-extrabold" style={{ color: 'var(--primary)' }}>
+        <Card variant="dark" className="flex flex-col items-center gap-2 text-center">
+          <Trophy size={24} strokeWidth={1.75} aria-hidden="true" style={{ color: 'var(--accent)' }} />
+          <span className="text-6xl font-extrabold" style={{ color: 'var(--on-dark)' }}>
             {pct}%
           </span>
-          <span className="text-lg" style={{ color: 'var(--muted)' }}>
+          <span className="text-lg" style={{ color: 'var(--on-dark)' }}>
             {correct} de {total} notas certas
           </span>
-        </div>
+        </Card>
       )}
 
-      <div className="w-full">
+      <Card>
         <h2 className="mb-3 text-xl font-bold" style={{ color: 'var(--text)' }}>
           As notas da lição
         </h2>
@@ -59,16 +57,12 @@ export function Results() {
           {session.results.map((r, i) => {
             const style =
               r.outcome === 'correct'
-                ? { background: 'var(--success)', color: '#fff' }
+                ? { background: 'var(--success)', color: 'var(--on-primary)' }
                 : r.outcome === 'wrong'
-                  ? { background: 'var(--error)', color: '#fff' }
-                  : { background: 'var(--surface)', color: 'var(--text)' }
+                  ? { background: 'var(--error)', color: 'var(--on-primary)' }
+                  : { background: 'var(--border-subtle)', color: 'var(--text)' }
             return (
-              <span
-                key={i}
-                className="rounded-xl px-4 py-2 text-xl font-bold"
-                style={{ ...style, border: '2px solid var(--border)' }}
-              >
+              <span key={i} className="rounded-full px-4 py-2 text-xl font-bold" style={style}>
                 {noteName(r.note)}
               </span>
             )
@@ -79,16 +73,12 @@ export function Results() {
             🟩 acertou · 🟥 errou · ⬜ sem resposta
           </p>
         )}
-      </div>
+      </Card>
 
       <div className="flex flex-wrap justify-center gap-4">
-        <button
-          onClick={() => navigate('/')}
-          className="rounded-2xl px-7 py-4 text-xl font-bold"
-          style={{ background: 'var(--primary)', color: '#fff' }}
-        >
+        <Button variant="cta" size="lg" onClick={() => navigate('/')}>
           Nova lição
-        </button>
+        </Button>
       </div>
     </div>
   )
