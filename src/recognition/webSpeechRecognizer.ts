@@ -43,6 +43,12 @@ function getRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
 }
 
+/** Espera antes de reiniciar após um onend; dobra a cada reinício sem resultado. */
+const RESTART_BASE_MS = 250
+const RESTART_MAX_MS = 4000
+/** Reinícios seguidos sem nenhum resultado antes de desistir com 'crashed'. */
+const MAX_FAILED_RESTARTS = 5
+
 export function hasWebSpeech(): boolean {
   return getRecognitionCtor() !== null
 }
@@ -60,6 +66,8 @@ export function createWebSpeechRecognizer(
   let rec: SpeechRecognitionLike | null = null
   let unsubscribeFrames: (() => void) | null = null
   let emitted: Record<number, number> = {}
+  let failedRestarts = 0
+  let restartTimer: ReturnType<typeof setTimeout> | null = null
 
   function setStatus(s: RecognizerStatus, err?: RecognizerError) {
     status = s
@@ -67,6 +75,7 @@ export function createWebSpeechRecognizer(
   }
 
   function handleResult(e: SpeechRecognitionEvent) {
+    failedRestarts = 0
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const steps: Step[] = textToSteps(e.results[i][0].transcript)
       const already = emitted[i] ?? 0
@@ -79,6 +88,8 @@ export function createWebSpeechRecognizer(
   }
 
   function teardown() {
+    if (restartTimer !== null) clearTimeout(restartTimer)
+    restartTimer = null
     unsubscribeFrames?.()
     unsubscribeFrames = null
     const r = rec
@@ -110,6 +121,7 @@ export function createWebSpeechRecognizer(
       detector.reset()
       aligner.reset()
       emitted = {}
+      failedRestarts = 0
 
       const r = new Ctor()
       r.lang = 'pt-BR'
@@ -122,15 +134,29 @@ export function createWebSpeechRecognizer(
           setStatus('error', 'denied')
         }
       }
-      // mantém a escuta viva: reinicia ao terminar enquanto ativo
+      // Mantém a escuta viva: reinicia ao terminar enquanto ativo, com espera
+      // crescente. Um onend sem resultado desde o último reinício conta como
+      // falha (é o que acontece com erros 'network' persistentes); após
+      // MAX_FAILED_RESTARTS falhas seguidas o motor desiste com 'crashed'.
       r.onend = () => {
         if (rec !== r) return
         emitted = {}
-        try {
-          r.start()
-        } catch {
-          /* já iniciado */
+        if (failedRestarts >= MAX_FAILED_RESTARTS) {
+          teardown()
+          setStatus('error', 'crashed')
+          return
         }
+        const delay = Math.min(RESTART_BASE_MS * 2 ** failedRestarts, RESTART_MAX_MS)
+        failedRestarts++
+        restartTimer = setTimeout(() => {
+          restartTimer = null
+          if (rec !== r) return
+          try {
+            r.start()
+          } catch {
+            /* já iniciado */
+          }
+        }, delay)
       }
       rec = r
 
