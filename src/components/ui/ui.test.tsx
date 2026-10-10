@@ -11,6 +11,13 @@ describe('componentes base', () => {
     expect(screen.getByRole('button', { name: 'Começar' }).className).toContain('rounded-full')
   })
 
+  it('Button secondary tem fundo surface e borda border', () => {
+    render(<Button variant="secondary">Config</Button>)
+    const cls = screen.getByRole('button').className
+    expect(cls).toContain('bg-[var(--surface)]')
+    expect(cls).toContain('border-[var(--border)]')
+  })
+
   it('Button com ícone renderiza svg com stroke-width 1.75', () => {
     render(<Button icon={Play}>Tocar</Button>)
     const svg = screen.getByRole('button').querySelector('svg')

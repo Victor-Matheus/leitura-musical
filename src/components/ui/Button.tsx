@@ -14,14 +14,14 @@ const VARIANTS = {
   primary:
     'bg-[var(--primary)] text-[var(--on-primary)] px-6 py-3.5 rounded-xl shadow-sm',
   secondary:
-    'bg-[var(--secondary)] text-[var(--on-secondary)] border border-[var(--border)] px-6 py-3.5 rounded-xl',
+    'bg-[var(--surface)] text-[var(--primary)] border border-[var(--border)] px-6 py-3.5 rounded-xl',
   cta: 'bg-[var(--primary)] text-[var(--on-primary)] px-8 py-4 rounded-full shadow-sm',
   ghost: 'bg-transparent text-[var(--text)] px-4 py-2.5 rounded-xl',
 } as const
 
 const HOVER = {
   primary: 'hover:bg-[var(--primary-strong)] hover:shadow-md active:scale-[0.98]',
-  secondary: 'hover:border-[var(--primary)] active:scale-[0.98]',
+  secondary: 'hover:bg-[var(--bg)] active:scale-[0.98]',
   cta: 'hover:bg-[var(--primary-strong)] hover:shadow-md active:scale-[0.98]',
   ghost: 'hover:bg-[var(--accent-soft)] active:scale-[0.98]',
 } as const
