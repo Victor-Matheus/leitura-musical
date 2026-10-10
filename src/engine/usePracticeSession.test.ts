@@ -198,3 +198,74 @@ test('desmontar para o reconhecedor e fecha o mic', async () => {
   expect(stop).toHaveBeenCalled()
   expect(mic.close).toHaveBeenCalled()
 })
+
+const outcomesOf = (onComplete: ReturnType<typeof vi.fn>) =>
+  onComplete.mock.calls[0][0].results.map((r: { outcome: unknown }) => r.outcome)
+
+test('reconhecedor que cai no meio da lição é parado e a lição segue silenciosa', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const { result, rec, onComplete } = setup()
+  const t0 = performanceClock.now() + 4
+  act(() => result.current.start())
+  await flush()
+  advance(4100)
+  say(rec, 'C', t0 + 0.1)
+  const stop = vi.spyOn(rec, 'stop')
+  act(() => rec.fail('crashed'))
+  expect(stop).toHaveBeenCalled()
+  expect(warn).toHaveBeenCalledTimes(1)
+  expect(result.current.voiceError).toBe('crashed')
+  expect(result.current.engine).toBe('silent')
+  expect(result.current.listening).toBe(false)
+  advance(3000 + 1500)
+  expect(outcomesOf(onComplete)).toEqual([null, null, null])
+  warn.mockRestore()
+})
+
+test('sílaba que chega na espera final de 1,5 s é pontuada', async () => {
+  const { result, rec, onComplete } = setup()
+  const t0 = performanceClock.now() + 4
+  act(() => result.current.start())
+  await flush()
+  advance(4000 + 3000) // lição terminou, espera em curso
+  expect(result.current.phase).toBe('finished')
+  say(rec, 'E', t0 + 2.5) // onset na nota 2, chegou atrasado
+  expect(result.current.feedback).toBe('idle')
+  advance(1500)
+  expect(outcomesOf(onComplete)).toEqual(['missed', 'missed', 'correct'])
+})
+
+test('select sem reconhecedor → motor silencioso', async () => {
+  const { result, onComplete } = setup({ deps: { select: async () => null } })
+  act(() => result.current.start())
+  await flush()
+  expect(result.current.engine).toBe('silent')
+  expect(result.current.listening).toBe(false)
+  advance(4000 + 3000 + 1500)
+  expect(outcomesOf(onComplete)).toEqual([null, null, null])
+})
+
+test('sem AudioContext com voz ligada → voiceError unsupported', async () => {
+  const openMic = vi.fn<SessionDeps['openMic']>()
+  const { result } = setup({ deps: { createContext: () => null, openMic } })
+  act(() => result.current.start())
+  await flush()
+  expect(openMic).not.toHaveBeenCalled()
+  expect(result.current.voiceError).toBe('unsupported')
+  expect(result.current.engine).toBe('silent')
+})
+
+test('sílaba emitida durante a pausa é descartada', async () => {
+  const { result, rec, onComplete } = setup()
+  const t0 = performanceClock.now() + 4
+  act(() => result.current.start())
+  await flush()
+  advance(4000 + 1500) // meio da nota 1
+  act(() => result.current.pause())
+  expect(result.current.phase).toBe('paused')
+  // Onset na nota 0 (janela ainda válida), mas chegou com a sessão pausada.
+  say(rec, 'C', t0 + 0.5)
+  act(() => result.current.resume())
+  advance(4000 + 2000 + 1500) // retoma da nota 1, ninguém responde
+  expect(outcomesOf(onComplete)).toEqual(['missed', 'missed', 'missed'])
+})

@@ -73,6 +73,8 @@ interface Run {
   ctx: AudioContext | null
   mic: MicInput | null
   recognizer: NoteRecognizer | null
+  /** O reconhecedor falhou no meio da lição: segue no modo silencioso. */
+  silent: boolean
   unsubscribe: (() => void) | null
   events: SyllableEvent[]
   draining: boolean
@@ -118,7 +120,7 @@ export function usePracticeSession(opts: {
       const player = playerRef.current
       if (runRef.current !== run || !player) return
       const { piece: p, onComplete: done } = latest.current
-      const silent = run.recognizer === null
+      const silent = run.silent || run.recognizer === null
       const outcomes = silent ? null : score(p.notes, player.windows, run.bpm, run.events)
       teardown()
       done({
@@ -205,9 +207,11 @@ export function usePracticeSession(opts: {
       const offSyllable = recognizer.onSyllable((e) => handleSyllable(run, e))
       const offStatus = recognizer.onStatus((s, err) => {
         if (runRef.current !== run || s !== 'error') return
-        // A lição em curso segue no modo silencioso.
-        run.recognizer = null
+        // A lição em curso segue no modo silencioso; o reconhecedor é liberado já.
+        run.silent = true
         offSyllable()
+        recognizer.stop()
+        console.warn(`[voz] reconhecedor ${recognizer.kind} falhou (${err ?? 'crashed'}); lição segue sem voz`)
         setVoiceError(err ?? 'crashed')
         setEngine('silent')
         setListening(false)
@@ -235,6 +239,7 @@ export function usePracticeSession(opts: {
       ctx,
       mic: null,
       recognizer: null,
+      silent: false,
       unsubscribe: null,
       events: [],
       draining: false,
