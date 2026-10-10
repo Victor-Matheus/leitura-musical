@@ -57,17 +57,17 @@ export function Results() {
         </h2>
         <div className="flex flex-wrap gap-2">
           {session.results.map((r, i) => {
-            const wrong = r.outcome === 'wrong' || r.outcome === 'missed'
-            const right = r.outcome === 'correct'
+            const style =
+              r.outcome === 'correct'
+                ? { background: 'var(--success)', color: '#fff' }
+                : r.outcome === 'wrong'
+                  ? { background: 'var(--error)', color: '#fff' }
+                  : { background: 'var(--surface)', color: 'var(--text)' }
             return (
               <span
                 key={i}
                 className="rounded-xl px-4 py-2 text-xl font-bold"
-                style={{
-                  background: wrong ? 'var(--error)' : right ? 'var(--success)' : 'var(--surface)',
-                  color: wrong || right ? '#fff' : 'var(--text)',
-                  border: '2px solid var(--border)',
-                }}
+                style={{ ...style, border: '2px solid var(--border)' }}
               >
                 {noteName(r.note)}
               </span>
@@ -76,7 +76,7 @@ export function Results() {
         </div>
         {session.voiceEnabled && (
           <p className="mt-3 text-base" style={{ color: 'var(--muted)' }}>
-            🟩 acertou · 🟥 errou ou não falou
+            🟩 acertou · 🟥 errou · ⬜ sem resposta
           </p>
         )}
       </div>

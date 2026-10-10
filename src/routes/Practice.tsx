@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { BeatPulse } from '../components/BeatPulse'
 import { NoteStaff } from '../components/NoteStaff'
 import { SpeedControl } from '../components/SpeedControl'
 import { TransportControls } from '../components/TransportControls'
 import { VoiceFeedback } from '../components/VoiceFeedback'
-import type { FeedbackState } from '../components/VoiceFeedback'
-import { usePlayer } from '../engine/usePlayer'
-import { useSpeechNotes } from '../engine/useSpeechNotes'
-import { SOLFEGE, noteName } from '../data/notes'
-import type { Piece, Step } from '../data/notes'
+import { usePracticeSession } from '../engine/usePracticeSession'
+import type { FeedbackState } from '../engine/usePracticeSession'
+import { noteName } from '../data/notes'
+import type { Piece } from '../data/notes'
 import { usePracticeStore } from '../store/usePracticeStore'
-import type { NoteResult } from '../store/usePracticeStore'
 
 const FEEDBACK_COLOR: Record<FeedbackState, string> = {
   idle: '#2b6cb0',
@@ -22,109 +20,6 @@ export function Practice() {
   const navigate = useNavigate()
   const location = useLocation()
   const piece = (location.state as { piece?: Piece } | null)?.piece
-
-  const settings = usePracticeStore((s) => s.settings)
-  const setSettings = usePracticeStore((s) => s.setSettings)
-  const saveSession = usePracticeStore((s) => s.saveSession)
-
-  const [feedback, setFeedback] = useState<FeedbackState>('idle')
-  const [lastHeard, setLastHeard] = useState<string | null>(null)
-  const [shake, setShake] = useState(false)
-
-  const resultsRef = useRef<NoteResult[]>([])
-  const startTimeRef = useRef(0)
-  const indexRef = useRef(0)
-
-  // Janela de graça: atribui resultados tardios de voz à nota anterior.
-  // Tamanho = min(800ms, 40% da duração de uma semínima) para não ultrapassar a nota seguinte.
-  const graceMs = Math.min(800, Math.round((60000 / settings.bpm) * 0.4))
-  const prevIndexRef = useRef(-1)
-  const advanceTimeRef = useRef(0)
-
-  const notes = useMemo(() => piece?.notes ?? [], [piece])
-
-  useEffect(() => {
-    resultsRef.current = notes.map((note) => ({ note, outcome: null }))
-  }, [notes])
-
-  const finalizeNote = (i: number) => {
-    if (settings.voiceEnabled && resultsRef.current[i]?.outcome === null) {
-      resultsRef.current[i].outcome = 'missed'
-    }
-  }
-
-  const player = usePlayer({
-    notes,
-    bpm: settings.bpm,
-    onAdvance: (from) => {
-      prevIndexRef.current = from
-      advanceTimeRef.current = Date.now()
-      // Adia finalização para dar tempo ao resultado de voz chegar
-      setTimeout(() => finalizeNote(from), graceMs)
-      setFeedback('idle')
-      setLastHeard(null)
-    },
-    onFinish: (last) => {
-      finalizeNote(last)
-      saveSession({
-        pieceTitle: piece?.title ?? 'Lição',
-        results: resultsRef.current.map((r) => ({ ...r })),
-        voiceEnabled: settings.voiceEnabled,
-        durationMs: Date.now() - startTimeRef.current,
-      })
-      navigate('/resultado')
-    },
-  })
-
-  indexRef.current = player.index
-
-  const applyAnswer = (step: Step, targetIndex: number) => {
-    const target = notes[targetIndex]
-    if (!target) return
-    // Só exibe feedback visual se a resposta é para a nota ATUALMENTE exibida.
-    // Quando o grace period aplica à nota anterior, registramos o score em silêncio.
-    const showFeedback = targetIndex === indexRef.current
-    setLastHeard(SOLFEGE[step])
-    if (step === target.step) {
-      resultsRef.current[targetIndex].outcome = 'correct'
-      if (showFeedback) setFeedback('correct')
-    } else {
-      if (resultsRef.current[targetIndex].outcome !== 'correct')
-        resultsRef.current[targetIndex].outcome = 'wrong'
-      if (showFeedback) {
-        setFeedback('wrong')
-        setShake(true)
-        setTimeout(() => setShake(false), 400)
-      }
-    }
-  }
-
-  const onNote = (step: Step) => {
-    // Ignora resultados capturados durante a contagem regressiva (warmup do mic)
-    if (!player.playing) return
-
-    const now = Date.now()
-    const pi = prevIndexRef.current
-
-    // Se estivermos dentro da janela de graça após um avanço, o resultado de voz
-    // provavelmente foi capturado durante a nota anterior
-    if (pi >= 0 && now - advanceTimeRef.current < graceMs) {
-      const prevResult = resultsRef.current[pi]
-      if (prevResult && prevResult.outcome !== 'correct') {
-        applyAnswer(step, pi)
-        return
-      }
-    }
-
-    applyAnswer(step, indexRef.current)
-  }
-
-  // Ativa o microfone durante a contagem regressiva para aquecimento.
-  // Resultados durante a contagem são descartados pelo guard em onNote.
-  const speech = useSpeechNotes({
-    enabled: settings.voiceEnabled && (player.playing || player.countdown > 0),
-    onNote,
-  })
 
   if (!piece) {
     return (
@@ -143,32 +38,36 @@ export function Practice() {
     )
   }
 
-  const started = player.playing || player.index > 0
+  return <PracticeSession piece={piece} />
+}
 
-  const onStart = () => {
-    // Reseta estado de sessão anterior antes de iniciar.
-    // prevIndexRef=0 + advanceTimeRef≈fim da contagem regressiva: trata a nota 0 como se
-    // já tivesse "avançado" para ela, então o grace period cobre a 1ª nota também
-    // (sem isso, pi=-1 fazia a fala da 1ª nota cair direto no índice atual, já avançado).
-    prevIndexRef.current = 0
-    advanceTimeRef.current = Date.now() + 2700
-    startTimeRef.current = Date.now()
-    resultsRef.current = notes.map((note) => ({ note, outcome: null }))
-    speech.reset() // limpa debounce para garantir que o primeiro resultado passe
-    player.start()
-  }
+function PracticeSession({ piece }: { piece: Piece }) {
+  const navigate = useNavigate()
+  const settings = usePracticeStore((s) => s.settings)
+  const setSettings = usePracticeStore((s) => s.setSettings)
+  const saveSession = usePracticeStore((s) => s.saveSession)
 
-  const onRestart = () => {
-    prevIndexRef.current = 0
-    advanceTimeRef.current = Date.now() + 2700
-    startTimeRef.current = Date.now()
-    resultsRef.current = notes.map((note) => ({ note, outcome: null }))
-    setFeedback('idle')
-    speech.reset()
-    player.restart()
-  }
+  const session = usePracticeSession({
+    piece,
+    voiceEnabled: settings.voiceEnabled,
+    bpm: settings.bpm,
+    onComplete: ({ results, durationMs }) => {
+      saveSession({
+        pieceTitle: piece.title,
+        results,
+        voiceEnabled: settings.voiceEnabled,
+        durationMs,
+      })
+      navigate('/resultado')
+    },
+  })
 
-  const current = notes[player.index]
+  const { phase } = session
+  const notes = piece.notes
+  const current = notes[session.index]
+  const running = phase === 'countIn' || phase === 'playing'
+  // O BPM é congelado a cada execução: só muda com a lição parada ou terminada.
+  const speedLocked = running || phase === 'paused'
 
   return (
     <div className="flex flex-1 flex-col items-center gap-6 py-2">
@@ -176,35 +75,38 @@ export function Practice() {
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>
           {piece.title}
         </h1>
-        <span className="text-lg font-semibold tabular-nums" style={{ color: 'var(--muted)' }}>
-          {player.index + 1} / {notes.length}
+        <span className="flex items-center gap-3">
+          <BeatPulse beat={session.beat} active={running} />
+          <span className="text-lg font-semibold tabular-nums" style={{ color: 'var(--muted)' }}>
+            {session.index + 1} / {notes.length}
+          </span>
         </span>
       </div>
 
       {/* Pauta / nota */}
       <div
         className={`relative flex w-full items-center justify-center rounded-3xl ${
-          shake ? 'animate-shake' : ''
+          session.feedback === 'wrong' ? 'animate-shake' : ''
         }`}
         style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}
       >
         <NoteStaff
           notes={notes}
-          index={player.index}
+          index={session.index}
           clef={piece.clef}
           mode={settings.displayMode}
-          highlightColor={FEEDBACK_COLOR[feedback]}
+          highlightColor={FEEDBACK_COLOR[session.feedback]}
           textColor={settings.highContrast ? '#ffffff' : '#1c1b1a'}
         />
-        {player.countdown > 0 && (
+        {phase === 'countIn' && (
           <div
             className="absolute inset-0 flex items-center justify-center rounded-3xl text-7xl font-extrabold"
             style={{ background: 'rgba(0,0,0,0.45)', color: '#fff' }}
           >
-            {player.countdown}
+            {session.countIn}
           </div>
         )}
-        {settings.showHint && current && player.countdown === 0 && (
+        {settings.showHint && current && phase !== 'countIn' && (
           <div
             className="absolute bottom-3 text-2xl font-extrabold"
             style={{ color: 'var(--primary)' }}
@@ -217,10 +119,11 @@ export function Practice() {
       {/* Feedback de voz */}
       {settings.voiceEnabled ? (
         <VoiceFeedback
-          listening={speech.listening}
-          error={speech.error}
-          lastHeard={lastHeard}
-          feedback={feedback}
+          listening={session.listening}
+          error={session.voiceError}
+          engine={session.engine}
+          lastHeard={session.lastHeard}
+          feedback={session.feedback}
         />
       ) : (
         <p className="text-base" style={{ color: 'var(--muted)' }}>
@@ -228,15 +131,20 @@ export function Practice() {
         </p>
       )}
 
-      <SpeedControl bpm={settings.bpm} onChange={(bpm) => setSettings({ bpm })} />
+      <SpeedControl
+        bpm={settings.bpm}
+        onChange={(bpm) => setSettings({ bpm })}
+        disabled={speedLocked}
+      />
 
+      {/* start() precisa rodar direto no clique (exigência de áudio do iOS). */}
       <TransportControls
-        playing={player.playing}
-        started={started}
-        onStart={onStart}
-        onPause={player.pause}
-        onResume={player.resume}
-        onRestart={onRestart}
+        playing={running}
+        started={phase !== 'idle'}
+        onStart={session.start}
+        onPause={session.pause}
+        onResume={session.resume}
+        onRestart={session.restart}
       />
 
       <button

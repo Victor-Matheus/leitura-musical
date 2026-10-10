@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { SpeedControl } from '../components/SpeedControl'
-import { speechSupported } from '../engine/useSpeechNotes'
+import { ModelDownload } from '../components/ModelDownload'
+import { isVoiceSupported } from '../audio/micInput'
 import { usePracticeStore } from '../store/usePracticeStore'
 import type { DisplayMode } from '../store/usePracticeStore'
 
@@ -48,6 +49,7 @@ function Toggle({
 
 export function Settings() {
   const navigate = useNavigate()
+  const voiceSupported = isVoiceSupported()
   const settings = usePracticeStore((s) => s.settings)
   const setSettings = usePracticeStore((s) => s.setSettings)
 
@@ -65,13 +67,15 @@ export function Settings() {
       <Toggle
         label="Identificação por voz"
         description={
-          speechSupported
+          voiceSupported
             ? 'Fale o nome da nota e receba feedback na hora'
-            : 'Seu navegador não suporta voz — use o Chrome'
+            : 'Seu navegador não suporta voz — use o Chrome ou o Safari atualizado'
         }
         checked={settings.voiceEnabled}
         onChange={(v) => setSettings({ voiceEnabled: v })}
       />
+
+      {settings.voiceEnabled && voiceSupported && <ModelDownload />}
 
       <Toggle
         label="Mostrar dica"
