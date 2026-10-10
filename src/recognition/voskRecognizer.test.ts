@@ -180,3 +180,41 @@ test('stop libera recognizer e modelo e para de ouvir o microfone', async () => 
   expect(listeners.size).toBe(0)
   expect(rec.status).toBe('idle')
 })
+
+test('stop() durante o carregamento: o modelo tardio é encerrado e o status nunca vira ready', async () => {
+  const env = setup()
+  let resolveModel!: (m: VoskModelLike) => void
+  const rec = createVoskRecognizer(env.mic, {
+    loadModel: () => new Promise<VoskModelLike>((r) => (resolveModel = r)),
+  })
+  const seen: RecognizerStatus[] = []
+  rec.onStatus((s) => seen.push(s))
+  const pending = rec.start()
+  rec.stop()
+  resolveModel(env.model)
+  await expect(pending).rejects.toThrow('load-failed')
+  expect(env.wasTerminated()).toBe(true)
+  expect(env.kaldis).toHaveLength(0)
+  expect(env.listeners.size).toBe(0)
+  expect(seen).not.toContain('ready')
+  expect(rec.status).toBe('idle')
+})
+
+test('KaldiRecognizer lançando: load-failed e model.terminate chamado', async () => {
+  const env = setup()
+  let terminated = false
+  const badModel: VoskModelLike = {
+    KaldiRecognizer: class {
+      constructor() {
+        throw new Error('boom')
+      }
+    } as unknown as VoskModelLike['KaldiRecognizer'],
+    terminate: () => {
+      terminated = true
+    },
+  }
+  const rec = createVoskRecognizer(env.mic, { loadModel: async () => badModel })
+  await expect(rec.start()).rejects.toThrow('load-failed')
+  expect(terminated).toBe(true)
+  expect(rec.status).toBe('error')
+})

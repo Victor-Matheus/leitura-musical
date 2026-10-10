@@ -52,6 +52,7 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
   let unsubscribeFrames: (() => void) | null = null
   let streamStart: number | null = null
   let emittedInUtterance = 0
+  let generation = 0
 
   function setStatus(s: RecognizerStatus, err?: RecognizerError) {
     status = s
@@ -82,37 +83,55 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
       return status
     },
     async start() {
+      // Cada stop() invalida o start() em andamento. Se isso ocorrer durante o
+      // carregamento, o modelo tardio é encerrado e start() rejeita 'load-failed'
+      // sem alterar o status (que já voltou a 'idle').
+      const myGeneration = ++generation
+      const stopped = () => myGeneration !== generation
       setStatus('loading')
+      let loaded: VoskModelLike
       try {
-        model = await loadModel()
+        loaded = await loadModel()
       } catch {
+        if (!stopped()) setStatus('error', 'load-failed')
+        throw new Error('load-failed')
+      }
+      if (stopped()) {
+        loaded.terminate()
+        throw new Error('load-failed')
+      }
+      model = loaded
+      try {
+        const recognizer = new loaded.KaldiRecognizer(mic.sampleRate, JSON.stringify(VOSK_GRAMMAR))
+        kaldi = recognizer
+        recognizer.setWords(true)
+        recognizer.on('partialresult', (m) => {
+          if (kaldi === recognizer) emitFrom(m.result.partial)
+        })
+        recognizer.on('result', (m) => {
+          if (kaldi !== recognizer) return
+          emitFrom(m.result.text)
+          deps.onFinalWords?.(m.result.result ?? [], streamStart ?? 0)
+          emittedInUtterance = 0
+        })
+        recognizer.on('error', () => {
+          if (kaldi === recognizer && status === 'ready') setStatus('error', 'crashed')
+        })
+        unsubscribeFrames = mic.onFrame((samples, startTime) => {
+          streamStart ??= startTime
+          for (const t of detector.push(samples, startTime, mic.sampleRate)) aligner.pushOnset(t)
+          const buf = SAMPLE_SCALE === 1 ? samples : samples.map((v) => v * SAMPLE_SCALE)
+          recognizer.acceptWaveformFloat(buf, mic.sampleRate)
+        })
+      } catch {
+        release()
         setStatus('error', 'load-failed')
         throw new Error('load-failed')
       }
-      const recognizer = new model.KaldiRecognizer(mic.sampleRate, JSON.stringify(VOSK_GRAMMAR))
-      kaldi = recognizer
-      recognizer.setWords(true)
-      recognizer.on('partialresult', (m) => {
-        if (kaldi === recognizer) emitFrom(m.result.partial)
-      })
-      recognizer.on('result', (m) => {
-        if (kaldi !== recognizer) return
-        emitFrom(m.result.text)
-        deps.onFinalWords?.(m.result.result ?? [], streamStart ?? 0)
-        emittedInUtterance = 0
-      })
-      recognizer.on('error', () => {
-        if (kaldi === recognizer && status === 'ready') setStatus('error', 'crashed')
-      })
-      unsubscribeFrames = mic.onFrame((samples, startTime) => {
-        streamStart ??= startTime
-        for (const t of detector.push(samples, startTime, mic.sampleRate)) aligner.pushOnset(t)
-        const buf = SAMPLE_SCALE === 1 ? samples : samples.map((v) => v * SAMPLE_SCALE)
-        recognizer.acceptWaveformFloat(buf, mic.sampleRate)
-      })
       setStatus('ready')
     },
     stop() {
+      generation++
       release()
       detector.reset()
       aligner.reset()
