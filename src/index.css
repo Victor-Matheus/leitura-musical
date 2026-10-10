@@ -2,30 +2,56 @@
 
 /* ============ Tema base (acessível) ============ */
 :root {
-  --bg: #f7f6f2;
+  --bg: #f8f9fa;
   --surface: #ffffff;
-  --text: #1c1b1a;
-  --muted: #6b6a67;
-  --primary: #2b6cb0;
-  --primary-strong: #1e4f86;
-  --success: #1f9d55;
-  --error: #d64545;
-  --border: #e2e0db;
+  --surface-dark: #1c3f3a;
+  --surface-dark-2: #14302c;
+  --text: #111827;
+  --muted: #6b7280;
+  --subtle: #9ca3af;
+  --primary: #1c3f3a;
+  --primary-strong: #142f2b;
+  --on-primary: #ffffff;
+  --secondary: #ebe8d8;
+  --on-secondary: #1c3f3a;
+  --accent: #34d399;
+  --accent-soft: #e6f4ea;
+  --badge-bg: #d1f0e7;
+  --badge-text: #0d5c4d;
+  --success: #047857;
+  --error: #dc2626;
+  --border: #e5e7eb;
+  --border-subtle: #eef0f2;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
   /* escala de fonte controlada pela barra de acessibilidade */
   --font-scale: 1;
 }
 
 /* Alto contraste */
 .theme-contrast {
-  --bg: #000000;
-  --surface: #0d0d0d;
+  --bg: #0f2421;
+  --surface: #14302c;
+  --surface-dark: #1c3f3a;
+  --surface-dark-2: #0b1c19;
   --text: #ffffff;
-  --muted: #d9d9d9;
-  --primary: #ffd23f;
-  --primary-strong: #ffe27a;
+  --muted: #d1d5db;
+  --subtle: #b8c2bf;
+  --primary: #34d399;
+  --primary-strong: #6ee7b7;
+  --on-primary: #0b1c19;
+  --secondary: #1c3f3a;
+  --on-secondary: #ffffff;
+  --accent: #34d399;
+  --accent-soft: #1c3f3a;
+  --badge-bg: #1c3f3a;
+  --badge-text: #a7f3d0;
   --success: #4ade80;
-  --error: #ff6b6b;
-  --border: #4d4d4d;
+  --error: #ff8a8a;
+  --border: #5f837d;
+  --border-subtle: #335450;
+  --shadow-card: none;
+  --shadow-hover: none;
 }
 
 /* Escalas de fonte */
@@ -41,7 +67,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
