@@ -10,7 +10,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.54.0",
