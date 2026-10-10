@@ -61,6 +61,15 @@ function selectionTimeout(bpm: number): number {
   return Math.max(0.5, COUNT_IN_BEATS * beatSeconds(bpm) - 0.5)
 }
 
+/**
+ * Retoma o AudioContext (chamar no clique). Um contexto suspenso ou interrompido
+ * (iOS, chamada telefônica) congela o relógio de áudio e, com ele, a lição.
+ */
+function resumeAudio(ctx: AudioContext | null | undefined) {
+  if (!ctx) return
+  void ctx.resume().catch(() => {})
+}
+
 function asRecognizerError(err: unknown): RecognizerError {
   return err instanceof Error && err.message === 'denied' ? 'denied' : 'unsupported'
 }
@@ -136,17 +145,12 @@ export function usePracticeSession(opts: {
       const run = runRef.current
       if (!run) return
       run.draining = true
-      const deadline = endedAt + DRAIN_SECONDS
-      const check = () => {
-        const remaining = deadline - run.clock.now()
-        if (remaining <= 0) {
-          run.drainTimer = null
-          complete(run, endedAt)
-        } else {
-          run.drainTimer = setTimeout(check, remaining * 1000)
-        }
-      }
-      check()
+      // Relógio de parede: se o AudioContext for suspenso na espera, o relógio
+      // de áudio para e a lição nunca terminaria.
+      run.drainTimer = setTimeout(() => {
+        run.drainTimer = null
+        complete(run, endedAt)
+      }, DRAIN_SECONDS * 1000)
     },
     [complete],
   )
@@ -231,6 +235,7 @@ export function usePracticeSession(opts: {
     const { deps: d, voiceEnabled: voice, bpm: frozenBpm } = latest.current
     // Criar o contexto ainda dentro do gesto do usuário (exigência do iOS).
     const ctx = d.createContext()
+    resumeAudio(ctx)
     const clock = d.clockFor(ctx)
     const run: Run = {
       clock,
@@ -256,7 +261,10 @@ export function usePracticeSession(opts: {
 
   const restart = useCallback(() => start(), [start])
   const pause = useCallback(() => playerRef.current?.pause(), [])
-  const resume = useCallback(() => playerRef.current?.resume(), [])
+  const resume = useCallback(() => {
+    resumeAudio(runRef.current?.ctx)
+    playerRef.current?.resume()
+  }, [])
 
   useEffect(() => {
     const onVisibility = () => {

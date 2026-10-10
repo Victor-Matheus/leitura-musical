@@ -44,7 +44,7 @@ function setup(opts: { voiceEnabled?: boolean; deps?: Partial<SessionDeps> } = {
   const select = vi.fn(async () => rec)
   const onComplete = vi.fn()
   const deps: Partial<SessionDeps> = {
-    createContext: () => ({ close: async () => {} }) as unknown as AudioContext,
+    createContext: () => ({ close: async () => {}, resume: async () => {} }) as unknown as AudioContext,
     openMic: async () => mic,
     select,
     clockFor: () => performanceClock,
@@ -268,4 +268,34 @@ test('sílaba emitida durante a pausa é descartada', async () => {
   act(() => result.current.resume())
   advance(4000 + 2000 + 1500) // retoma da nota 1, ninguém responde
   expect(outcomesOf(onComplete)).toEqual(['missed', 'missed', 'missed'])
+})
+
+test('relógio de áudio congelado na espera final: a lição termina após 1,5 s de timers', async () => {
+  let frozenAt: number | null = null
+  const clock = { now: () => frozenAt ?? performanceClock.now() }
+  const { result, onComplete } = setup({ deps: { clockFor: () => clock } })
+  act(() => result.current.start())
+  await flush()
+  advance(4000 + 3000)
+  expect(result.current.phase).toBe('finished')
+  frozenAt = clock.now() // AudioContext suspenso: o relógio não anda mais
+  expect(onComplete).not.toHaveBeenCalled()
+  advance(1500)
+  expect(onComplete).toHaveBeenCalledTimes(1)
+})
+
+test('resume() e restart() retomam o AudioContext no clique', async () => {
+  const resume = vi.fn(async () => {})
+  const ctx = { close: async () => {}, resume } as unknown as AudioContext
+  const { result } = setup({ deps: { createContext: () => ctx } })
+  act(() => result.current.start())
+  await flush()
+  advance(4500)
+  act(() => result.current.pause())
+  resume.mockClear()
+  act(() => result.current.resume())
+  expect(resume).toHaveBeenCalledTimes(1)
+  resume.mockClear()
+  act(() => result.current.restart())
+  expect(resume).toHaveBeenCalledTimes(1)
 })
