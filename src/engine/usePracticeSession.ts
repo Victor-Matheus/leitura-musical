@@ -260,11 +260,20 @@ export function usePracticeSession(opts: {
   }, [teardown, connectVoice])
 
   const restart = useCallback(() => start(), [start])
-  const pause = useCallback(() => playerRef.current?.pause(), [])
+  /** O feedback da nota anterior não deve sobreviver à pausa nem à retomada. */
+  const clearFeedback = useCallback(() => {
+    setFeedback(null)
+    setLastHeard(null)
+  }, [])
+  const pause = useCallback(() => {
+    clearFeedback()
+    playerRef.current?.pause()
+  }, [clearFeedback])
   const resume = useCallback(() => {
     resumeAudio(runRef.current?.ctx)
+    clearFeedback()
     playerRef.current?.resume()
-  }, [])
+  }, [clearFeedback])
 
   useEffect(() => {
     const onVisibility = () => {

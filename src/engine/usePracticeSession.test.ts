@@ -299,3 +299,19 @@ test('resume() e restart() retomam o AudioContext no clique', async () => {
   act(() => result.current.restart())
   expect(resume).toHaveBeenCalledTimes(1)
 })
+
+test('pausar e retomar limpam o feedback e a última sílaba ouvida', async () => {
+  const { result, rec } = setup()
+  const t0 = performanceClock.now() + 4
+  act(() => result.current.start())
+  await flush()
+  advance(4100)
+  say(rec, 'C', t0 + 0.1)
+  expect(result.current.feedback).toBe('correct')
+  act(() => result.current.pause())
+  expect(result.current.feedback).toBe('idle')
+  expect(result.current.lastHeard).toBeNull()
+  act(() => result.current.resume())
+  expect(result.current.feedback).toBe('idle')
+  expect(result.current.lastHeard).toBeNull()
+})
