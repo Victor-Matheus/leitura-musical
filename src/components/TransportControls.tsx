@@ -1,54 +1,61 @@
+import { Pause, Play, RotateCcw } from 'lucide-react'
+import { Button } from './ui'
+
 interface TransportControlsProps {
   playing: boolean
   started: boolean
+  /** Lição terminada, aguardando a última resposta antes do resultado: nada a acionar. */
+  finished: boolean
   onStart: () => void
   onPause: () => void
   onResume: () => void
   onRestart: () => void
 }
 
-const btn =
-  'flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-xl font-bold transition active:scale-95'
-
 export function TransportControls({
   playing,
   started,
+  finished,
   onStart,
   onPause,
   onResume,
   onRestart,
 }: TransportControlsProps) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4">
-      {!playing ? (
-        <button
-          className={btn}
-          style={{ background: 'var(--primary)', color: '#fff' }}
-          onClick={started ? onResume : onStart}
-        >
-          ▶ {started ? 'Continuar' : 'Começar'}
-        </button>
-      ) : (
-        <button
-          className={btn}
-          style={{ background: 'var(--primary-strong)', color: '#fff' }}
+    <div className="flex w-full flex-wrap items-center justify-center gap-3">
+      {playing || finished ? (
+        <Button
+          variant="primary"
+          size="lg"
+          icon={Pause}
           onClick={onPause}
+          disabled={finished}
+          className="min-w-40"
         >
-          ⏸ Pausar
-        </button>
+          Pausar
+        </Button>
+      ) : (
+        <Button
+          variant="primary"
+          size="lg"
+          icon={Play}
+          onClick={started ? onResume : onStart}
+          className="min-w-40"
+        >
+          {started ? 'Continuar' : 'Começar'}
+        </Button>
       )}
 
-      <button
-        className={btn}
-        style={{
-          background: 'var(--surface)',
-          color: 'var(--text)',
-          border: '2px solid var(--border)',
-        }}
+      <Button
+        variant="secondary"
+        size="lg"
+        icon={RotateCcw}
         onClick={onRestart}
+        disabled={finished}
+        className="min-w-40"
       >
-        ↺ Reiniciar
-      </button>
+        Reiniciar
+      </Button>
     </div>
   )
 }

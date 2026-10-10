@@ -4,24 +4,30 @@ import type { RenderContext } from 'vexflow'
 import type { Note } from '../data/notes'
 import { vexKey } from '../data/notes'
 import type { DisplayMode } from '../store/usePracticeStore'
+import { readToken } from '../theme/readToken'
+
+/** Tokens de cor que podem destacar a nota atual. */
+export type HighlightToken = 'primary' | 'success' | 'error'
 
 interface NoteStaffProps {
   notes: Note[]
   index: number
   clef: 'treble' | 'bass'
   mode: DisplayMode
-  /** cor da nota atual (feedback: verde/vermelho/azul). default = primário */
-  highlightColor?: string
-  /** cor do texto do tema (pauta, clave, notas não destacadas) — VexFlow desenha com
-   * estilo inline, então o CSS de alto contraste não alcança o SVG; precisa ser passada
-   * explicitamente para a cor correta ser usada no momento do desenho. */
-  textColor: string
+  /** token da cor da nota atual (feedback). default = primary */
+  highlight?: HighlightToken
+  /** VexFlow desenha com estilo inline, então o CSS de alto contraste não alcança o SVG:
+   * as cores são lidas dos tokens (readToken) no momento do desenho, e a pauta é
+   * redesenhada quando o alto contraste muda. */
+  highContrast: boolean
 }
 
 function buildStaveNote(note: Note, clef: string, color: string): StaveNote {
   const sn = new StaveNote({ keys: [vexKey(note)], duration: note.duration, clef })
   if (note.accidental) sn.addModifier(new Accidental(note.accidental), 0)
   sn.setStyle({ fillStyle: color, strokeStyle: color })
+  // linhas suplementares têm estilo próprio (padrão #444, invisível no alto contraste)
+  sn.setLedgerLineStyle({ fillStyle: color, strokeStyle: color })
   return sn
 }
 
@@ -58,8 +64,8 @@ export function NoteStaff({
   index,
   clef,
   mode,
-  highlightColor = '#2b6cb0',
-  textColor,
+  highlight = 'primary',
+  highContrast,
 }: NoteStaffProps) {
   const hostRef = useRef<HTMLDivElement>(null)
 
@@ -67,6 +73,8 @@ export function NoteStaff({
     const host = hostRef.current
     if (!host) return
     host.innerHTML = ''
+    const textColor = readToken('text')
+    const highlightColor = readToken(highlight)
 
     const renderer = new Renderer(host, Renderer.Backends.SVG)
     const ctx = renderer.getContext()
@@ -118,7 +126,8 @@ export function NoteStaff({
       const ratio = notes.length > 1 ? index / (notes.length - 1) : 0
       host.scrollLeft = ratio * (W - host.clientWidth)
     }
-  }, [notes, index, clef, mode, highlightColor, textColor])
+    // highContrast não é lido no efeito, mas troca os valores dos tokens: precisa redesenhar.
+  }, [notes, index, clef, mode, highlight, highContrast])
 
   return (
     <div

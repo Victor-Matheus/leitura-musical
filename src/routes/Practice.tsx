@@ -1,19 +1,23 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { BeatPulse } from '../components/BeatPulse'
 import { NoteStaff } from '../components/NoteStaff'
+import type { HighlightToken } from '../components/NoteStaff'
 import { SpeedControl } from '../components/SpeedControl'
 import { TransportControls } from '../components/TransportControls'
 import { VoiceFeedback } from '../components/VoiceFeedback'
+import { Badge, Button, Card } from '../components/ui'
 import { usePracticeSession } from '../engine/usePracticeSession'
 import type { FeedbackState } from '../engine/usePracticeSession'
 import { noteName } from '../data/notes'
 import type { Piece } from '../data/notes'
 import { usePracticeStore } from '../store/usePracticeStore'
 
-const FEEDBACK_COLOR: Record<FeedbackState, string> = {
-  idle: '#2b6cb0',
-  correct: '#1f9d55',
-  wrong: '#d64545',
+// Tokens de cor da nota atual; o NoteStaff resolve cada um com readToken ao desenhar.
+const FEEDBACK_COLOR: Record<FeedbackState, HighlightToken> = {
+  idle: 'primary',
+  correct: 'success',
+  wrong: 'error',
 }
 
 export function Practice() {
@@ -24,16 +28,10 @@ export function Practice() {
   if (!piece) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 py-12">
-        <p className="text-xl" style={{ color: 'var(--muted)' }}>
-          Nenhuma lição selecionada.
-        </p>
-        <button
-          onClick={() => navigate('/')}
-          className="rounded-2xl px-6 py-3 text-lg font-bold"
-          style={{ background: 'var(--primary)', color: '#fff' }}
-        >
+        <p className="text-xl text-[var(--muted)]">Nenhuma lição selecionada.</p>
+        <Button variant="primary" size="lg" onClick={() => navigate('/')}>
           Escolher lição
-        </button>
+        </Button>
       </div>
     )
   }
@@ -70,90 +68,91 @@ function PracticeSession({ piece }: { piece: Piece }) {
   const speedLocked = running || phase === 'paused'
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-6 py-2">
-      <div className="flex w-full items-center justify-between">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>
+    <div className="flex flex-1 flex-col gap-5 py-2">
+      <div className="flex w-full items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
           {piece.title}
         </h1>
-        <span className="flex items-center gap-3">
-          <BeatPulse beat={session.beat} active={running} />
-          <span className="text-lg font-semibold tabular-nums" style={{ color: 'var(--muted)' }}>
+        <Badge>
+          <span className="tabular-nums">
             {session.index + 1} / {notes.length}
           </span>
-        </span>
+        </Badge>
       </div>
 
       {/* Pauta / nota */}
-      <div
-        className={`relative flex w-full items-center justify-center rounded-3xl ${
+      <Card
+        className={`relative flex w-full items-center justify-center ${
           session.feedback === 'wrong' ? 'animate-shake' : ''
         }`}
-        style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}
       >
         <NoteStaff
           notes={notes}
           index={session.index}
           clef={piece.clef}
           mode={settings.displayMode}
-          highlightColor={FEEDBACK_COLOR[session.feedback]}
-          textColor={settings.highContrast ? '#ffffff' : '#1c1b1a'}
+          highlight={FEEDBACK_COLOR[session.feedback]}
+          highContrast={settings.highContrast}
         />
         {phase === 'countIn' && (
           <div
-            className="absolute inset-0 flex items-center justify-center rounded-3xl text-7xl font-extrabold"
-            style={{ background: 'rgba(0,0,0,0.45)', color: '#fff' }}
+            aria-hidden="true"
+            className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[var(--surface-dark)]/80 text-7xl font-extrabold text-[var(--on-dark)]"
           >
             {session.countIn}
           </div>
         )}
         {settings.showHint && current && phase !== 'countIn' && (
-          <div
-            className="absolute bottom-3 text-2xl font-extrabold"
-            style={{ color: 'var(--primary)' }}
-          >
+          <div className="absolute bottom-3 text-2xl font-extrabold text-[var(--primary)]">
             {noteName(current)}
           </div>
         )}
+      </Card>
+      {/* Região sempre montada para o leitor de tela anunciar a contagem 4-3-2-1. */}
+      <div aria-live="polite" className="sr-only">
+        {phase === 'countIn' ? session.countIn : ''}
       </div>
 
-      {/* Feedback de voz */}
-      {settings.voiceEnabled ? (
-        <VoiceFeedback
-          listening={session.listening}
-          error={session.voiceError}
-          engine={session.engine}
-          lastHeard={session.lastHeard}
-          feedback={session.feedback}
-        />
-      ) : (
-        <p className="text-base" style={{ color: 'var(--muted)' }}>
-          Modo silencioso — os nomes das notas aparecem ao final.
-        </p>
-      )}
+      {/* Feedback de voz e pulso */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <BeatPulse beat={session.beat} active={running} />
+        {settings.voiceEnabled ? (
+          <VoiceFeedback
+            listening={session.listening}
+            error={session.voiceError}
+            engine={session.engine}
+            lastHeard={session.lastHeard}
+            feedback={session.feedback}
+          />
+        ) : (
+          <p className="text-base text-[var(--muted)]">
+            Modo silencioso — os nomes das notas aparecem ao final.
+          </p>
+        )}
+      </div>
 
-      <SpeedControl
-        bpm={settings.bpm}
-        onChange={(bpm) => setSettings({ bpm })}
-        disabled={speedLocked}
-      />
+      <Card className="w-full">
+        <SpeedControl
+          bpm={settings.bpm}
+          onChange={(bpm) => setSettings({ bpm })}
+          disabled={speedLocked}
+        />
+      </Card>
 
       {/* start() precisa rodar direto no clique (exigência de áudio do iOS). */}
       <TransportControls
         playing={running}
         started={phase !== 'idle'}
+        finished={phase === 'finished'}
         onStart={session.start}
         onPause={session.pause}
         onResume={session.resume}
         onRestart={session.restart}
       />
 
-      <button
-        onClick={() => navigate('/')}
-        className="text-base underline"
-        style={{ color: 'var(--muted)' }}
-      >
-        ← Voltar às lições
-      </button>
+      <Button variant="ghost" icon={ArrowLeft} onClick={() => navigate('/')} className="self-center">
+        Voltar às lições
+      </Button>
     </div>
   )
 }
