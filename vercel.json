@@ -1,1 +1,1 @@
-{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+{ "rewrites": [{ "source": "/((?!models/|worklets/|assets/).*)", "destination": "/index.html" }] }
