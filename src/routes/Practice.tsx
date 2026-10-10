@@ -44,12 +44,12 @@ export function Practice() {
   const notes = useMemo(() => piece?.notes ?? [], [piece])
 
   useEffect(() => {
-    resultsRef.current = notes.map((note) => ({ note, correct: null }))
+    resultsRef.current = notes.map((note) => ({ note, outcome: null }))
   }, [notes])
 
   const finalizeNote = (i: number) => {
-    if (settings.voiceEnabled && resultsRef.current[i]?.correct === null) {
-      resultsRef.current[i].correct = false
+    if (settings.voiceEnabled && resultsRef.current[i]?.outcome === null) {
+      resultsRef.current[i].outcome = 'missed'
     }
   }
 
@@ -86,11 +86,11 @@ export function Practice() {
     const showFeedback = targetIndex === indexRef.current
     setLastHeard(SOLFEGE[step])
     if (step === target.step) {
-      resultsRef.current[targetIndex].correct = true
+      resultsRef.current[targetIndex].outcome = 'correct'
       if (showFeedback) setFeedback('correct')
     } else {
-      if (resultsRef.current[targetIndex].correct !== true)
-        resultsRef.current[targetIndex].correct = false
+      if (resultsRef.current[targetIndex].outcome !== 'correct')
+        resultsRef.current[targetIndex].outcome = 'wrong'
       if (showFeedback) {
         setFeedback('wrong')
         setShake(true)
@@ -110,7 +110,7 @@ export function Practice() {
     // provavelmente foi capturado durante a nota anterior
     if (pi >= 0 && now - advanceTimeRef.current < graceMs) {
       const prevResult = resultsRef.current[pi]
-      if (prevResult && prevResult.correct !== true) {
+      if (prevResult && prevResult.outcome !== 'correct') {
         applyAnswer(step, pi)
         return
       }
@@ -153,7 +153,7 @@ export function Practice() {
     prevIndexRef.current = 0
     advanceTimeRef.current = Date.now() + 2700
     startTimeRef.current = Date.now()
-    resultsRef.current = notes.map((note) => ({ note, correct: null }))
+    resultsRef.current = notes.map((note) => ({ note, outcome: null }))
     speech.reset() // limpa debounce para garantir que o primeiro resultado passe
     player.start()
   }
@@ -162,7 +162,7 @@ export function Practice() {
     prevIndexRef.current = 0
     advanceTimeRef.current = Date.now() + 2700
     startTimeRef.current = Date.now()
-    resultsRef.current = notes.map((note) => ({ note, correct: null }))
+    resultsRef.current = notes.map((note) => ({ note, outcome: null }))
     setFeedback('idle')
     speech.reset()
     player.restart()

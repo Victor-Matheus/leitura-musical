@@ -24,7 +24,7 @@ export function Results() {
   }
 
   const total = session.results.length
-  const correct = session.results.filter((r) => r.correct === true).length
+  const correct = session.results.filter((r) => r.outcome === 'correct').length
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0
   const seconds = Math.round(session.durationMs / 1000)
 
@@ -57,8 +57,8 @@ export function Results() {
         </h2>
         <div className="flex flex-wrap gap-2">
           {session.results.map((r, i) => {
-            const wrong = r.correct === false
-            const right = r.correct === true
+            const wrong = r.outcome === 'wrong' || r.outcome === 'missed'
+            const right = r.outcome === 'correct'
             return (
               <span
                 key={i}

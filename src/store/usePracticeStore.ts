@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Note } from '../data/notes'
+import type { NoteOutcome } from '../engine/scorer'
 
 export type FontSize = 'normal' | 'grande' | 'enorme'
 export type DisplayMode = 'flashcard' | 'partitura'
@@ -17,7 +18,7 @@ export interface Settings {
 // Resultado de uma única nota tocada na sessão
 export interface NoteResult {
   note: Note
-  correct: boolean | null // null = não respondida (modo sem voz)
+  outcome: NoteOutcome | null // null = modo sem voz
 }
 
 export interface SessionResult {
