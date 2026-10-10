@@ -1,5 +1,13 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { MIN_MODEL_BYTES, MODEL_PATH, downloadModel, getModelUrl, isModelCached } from './modelStore'
+import {
+  IDBFS_CLEANUP_FLAG,
+  MIN_MODEL_BYTES,
+  MODEL_PATH,
+  cleanupStaleVoskStore,
+  downloadModel,
+  getModelUrl,
+  isModelCached,
+} from './modelStore'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -91,7 +99,35 @@ test('downloadModel recusa arquivo menor que 5 MB', async () => {
   expect(put).not.toHaveBeenCalled()
 })
 
-test('getModelUrl lança se não estiver em cache', async () => {
-  fakeCaches(async () => undefined)
-  await expect(getModelUrl()).rejects.toThrow()
+test('getModelUrl é a URL absoluta e estável do modelo, igual em toda chamada', () => {
+  expect(getModelUrl()).toBe(`${location.origin}${MODEL_PATH}`)
+  expect(getModelUrl()).toBe(getModelUrl())
+  expect(getModelUrl().startsWith('blob:')).toBe(false)
+})
+
+function fakeIndexedDB() {
+  const deleteDatabase = vi.fn(() => {
+    const req = {} as IDBOpenDBRequest
+    queueMicrotask(() => req.onsuccess?.(new Event('success')))
+    return req
+  })
+  vi.stubGlobal('indexedDB', { deleteDatabase })
+  return deleteDatabase
+}
+
+test('cleanupStaleVoskStore apaga o IDBFS do Vosk uma única vez', async () => {
+  localStorage.removeItem(IDBFS_CLEANUP_FLAG)
+  const deleteDatabase = fakeIndexedDB()
+  await Promise.all([cleanupStaleVoskStore(), cleanupStaleVoskStore()])
+  await cleanupStaleVoskStore()
+  expect(deleteDatabase).toHaveBeenCalledTimes(1)
+  expect(deleteDatabase).toHaveBeenCalledWith('/vosk')
+  expect(localStorage.getItem(IDBFS_CLEANUP_FLAG)).toBe('done')
+})
+
+test('cleanupStaleVoskStore não roda com a marca já gravada', async () => {
+  localStorage.setItem(IDBFS_CLEANUP_FLAG, 'done')
+  const deleteDatabase = fakeIndexedDB()
+  await cleanupStaleVoskStore()
+  expect(deleteDatabase).not.toHaveBeenCalled()
 })

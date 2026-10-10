@@ -57,10 +57,60 @@ export async function downloadModel(onProgress: (fraction: number) => void): Pro
   onProgress(1)
 }
 
-/** blob: URL do modelo em cache; lança se ainda não foi baixado. */
-export async function getModelUrl(): Promise<string> {
-  const cache = await caches.open(CACHE_NAME)
-  const res = await cache.match(MODEL_PATH)
-  if (!res) throw new Error('Modelo de voz não está em cache')
-  return URL.createObjectURL(await res.blob())
+/**
+ * URL estável (absoluta, mesma origem) que o worker do vosk-browser baixa.
+ *
+ * O worker guarda o modelo extraído no IDBFS em "/vosk/" + url.replace(/\W/g, "_")
+ * e, antes de baixar, sincroniza o IDBFS e pula o download se encontra
+ * "<chave>/extracted.ok". Com uma URL estável o próprio IDBFS do Vosk vira o
+ * cache offline: só a primeira carga usa a rede. (Antes passávamos um blob: URL
+ * novo a cada lição, e cada lição gravava mais uma cópia de ~30 MB no IDBFS.)
+ *
+ * A cópia na Cache API continua como marca de "baixado e validado" e esquenta o
+ * cache HTTP para o primeiro fetch do worker; logo após o download o modelo é
+ * pré-carregado, o que já grava o IDBFS enquanto há rede.
+ */
+export function getModelUrl(): string {
+  return new URL(MODEL_PATH, location.origin).href
+}
+
+export const IDBFS_CLEANUP_FLAG = 'vosk-idbfs-cleanup-v1'
+/** Banco do IDBFS do vosk-browser: o Emscripten usa o ponto de montagem como nome. */
+const VOSK_IDBFS_DB = '/vosk'
+let cleanupInFlight: Promise<void> | null = null
+
+function readFlag(): boolean | null {
+  try {
+    return localStorage.getItem(IDBFS_CLEANUP_FLAG) === 'done'
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Limpeza única das cópias "/vosk/blob_*" deixadas pela versão que usava blob: URL.
+ * Apaga o banco "/vosk" inteiro uma vez (antes de qualquer carga do modelo); a
+ * próxima carga baixa de novo pela URL estável. Sem localStorage não dá para
+ * lembrar que já limpou, então não limpa (evita rebaixar a cada visita).
+ */
+export function cleanupStaleVoskStore(): Promise<void> {
+  if (readFlag() !== false) return Promise.resolve()
+  if (typeof indexedDB === 'undefined') return Promise.resolve()
+  cleanupInFlight ??= new Promise<void>((resolve) => {
+    const req = indexedDB.deleteDatabase(VOSK_IDBFS_DB)
+    req.onsuccess = () => {
+      try {
+        localStorage.setItem(IDBFS_CLEANUP_FLAG, 'done')
+      } catch {
+        /* sem armazenamento: tenta de novo na próxima visita */
+      }
+      resolve()
+    }
+    // Erro ou bloqueio (outra aba aberta): segue a carga; tenta de novo depois.
+    req.onerror = () => resolve()
+    req.onblocked = () => resolve()
+  }).finally(() => {
+    cleanupInFlight = null
+  })
+  return cleanupInFlight
 }

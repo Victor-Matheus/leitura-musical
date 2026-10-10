@@ -1,6 +1,6 @@
 import type { MicInput } from '../audio/micInput'
 import { createAligner } from './aligner'
-import { getModelUrl } from './modelStore'
+import { cleanupStaleVoskStore, getModelUrl } from './modelStore'
 import { createOnsetDetector } from './onsetDetector'
 import { textToSteps, VOSK_GRAMMAR } from './syllables'
 import type { NoteRecognizer, RecognizerError, RecognizerStatus, SyllableEvent } from './types'
@@ -35,8 +35,9 @@ export interface VoskRecognizerDeps {
 }
 
 async function defaultLoadModel(): Promise<VoskModelLike> {
+  await cleanupStaleVoskStore()
   const { createModel } = await import('vosk-browser')
-  return (await createModel(await getModelUrl())) as unknown as VoskModelLike
+  return (await createModel(getModelUrl())) as unknown as VoskModelLike
 }
 
 export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {}): NoteRecognizer {
