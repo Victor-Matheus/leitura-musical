@@ -44,8 +44,17 @@ export async function openMic(ctx: AudioContext): Promise<MicInput> {
     throw new Error('unsupported')
   }
 
-  const source = ctx.createMediaStreamSource(stream)
-  const node = new AudioWorkletNode(ctx, 'mic-tap')
+  let source: MediaStreamAudioSourceNode
+  let node: AudioWorkletNode
+  let sink: GainNode
+  try {
+    source = ctx.createMediaStreamSource(stream)
+    node = new AudioWorkletNode(ctx, 'mic-tap')
+    sink = ctx.createGain()
+  } catch {
+    stream.getTracks().forEach((t) => t.stop())
+    throw new Error('unsupported')
+  }
   const listeners = new Set<(samples: Float32Array, startTime: number) => void>()
   const chunker = createChunker(FRAME_SIZE, (samples, startTime) => {
     listeners.forEach((cb) => cb(samples, startTime))
@@ -53,7 +62,12 @@ export async function openMic(ctx: AudioContext): Promise<MicInput> {
   node.port.onmessage = (e: MessageEvent<{ samples: Float32Array; time: number }>) => {
     chunker.push(e.data.samples, e.data.time, ctx.sampleRate)
   }
-  source.connect(node) // o nó não vai ao destination: não há retorno de áudio
+  // O WebKit só processa nós que chegam ao destination. O ganho 0 garante que
+  // não há retorno do microfone nos alto-falantes.
+  sink.gain.value = 0
+  source.connect(node)
+  node.connect(sink)
+  sink.connect(ctx.destination)
 
   return {
     context: ctx,
@@ -66,6 +80,7 @@ export async function openMic(ctx: AudioContext): Promise<MicInput> {
       node.port.onmessage = null
       source.disconnect()
       node.disconnect()
+      sink.disconnect()
       stream.getTracks().forEach((t) => t.stop())
       listeners.clear()
     },
