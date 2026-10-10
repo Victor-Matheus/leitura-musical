@@ -3,6 +3,7 @@ import { Link, Route, Routes } from 'react-router-dom'
 import { AccessibilityBar } from './components/AccessibilityBar'
 import { SplashScreen } from './components/SplashScreen'
 import { usePracticeStore } from './store/usePracticeStore'
+import { Diagnostico } from './routes/Diagnostico'
 import { Home } from './routes/Home'
 import { Practice } from './routes/Practice'
 import { Results } from './routes/Results'
@@ -74,6 +75,7 @@ export default function App() {
             <Route path="/praticar" element={<Practice />} />
             <Route path="/resultado" element={<Results />} />
             <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/diagnostico" element={<Diagnostico />} />
           </Routes>
         </main>
 
