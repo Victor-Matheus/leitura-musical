@@ -6,7 +6,11 @@ import type { NoteRecognizer, RecognizerError, RecognizerStatus, SyllableEvent }
 import { disposeModel, getWarmModel } from './voskModelCache'
 import type { VoskModelLike, VoskRecognizerLike } from './voskModelCache'
 
-/** Escala aplicada às amostras antes do Vosk. Usar 32768 se o Kaldi não reconhecer floats em [-1, 1]. */
+/**
+ * Escala aplicada às amostras antes do Vosk. Deve ficar em 1: o
+ * acceptWaveformFloat do vosk-browser já multiplica cada amostra por 0x8000
+ * (faixa do int16 que o Kaldi espera); escalar aqui de novo saturaria o sinal.
+ */
 export const SAMPLE_SCALE = 1
 
 /** O Vosk local responde rápido: um onset sem rótulo há mais de 1 s é órfão. */
