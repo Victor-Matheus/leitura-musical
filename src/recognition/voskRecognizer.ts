@@ -9,6 +9,11 @@ import type { VoskModelLike, VoskRecognizerLike } from './voskModelCache'
 /** Escala aplicada às amostras antes do Vosk. Usar 32768 se o Kaldi não reconhecer floats em [-1, 1]. */
 export const SAMPLE_SCALE = 1
 
+/** O Vosk local responde rápido: um onset sem rótulo há mais de 1 s é órfão. */
+export const MAX_PENDING_SECONDS = 1
+/** Após um result final, onsets mais velhos que isto não ganham mais rótulo. */
+export const FINAL_DROP_SECONDS = 0.5
+
 export type { VoskModelLike, VoskRecognizerLike }
 
 export interface FinalWord {
@@ -32,7 +37,7 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
   const syllableListeners = new Set<(e: SyllableEvent) => void>()
   const statusListeners = new Set<(s: RecognizerStatus, err?: RecognizerError) => void>()
   const detector = createOnsetDetector()
-  const aligner = createAligner()
+  const aligner = createAligner({ maxPendingSeconds: MAX_PENDING_SECONDS })
 
   let status: RecognizerStatus = 'idle'
   let kaldi: VoskRecognizerLike | null = null
@@ -94,6 +99,7 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
         recognizer.on('result', (m) => {
           if (kaldi !== recognizer) return
           emitFrom(m.result.text)
+          aligner.dropBefore(mic.context.currentTime - FINAL_DROP_SECONDS)
           deps.onFinalWords?.(m.result.result ?? [], streamStart ?? 0)
           emittedInUtterance = 0
         })

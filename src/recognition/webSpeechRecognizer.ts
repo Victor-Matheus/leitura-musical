@@ -53,7 +53,8 @@ export function createWebSpeechRecognizer(
 ): NoteRecognizer {
   const syllableListeners = new Set<(e: SyllableEvent) => void>()
   const statusListeners = new Set<(s: RecognizerStatus, err?: RecognizerError) => void>()
-  const aligner = createAligner()
+  // O Web Speech passa pela rede: rótulos chegam até ~2,5 s depois do onset.
+  const aligner = createAligner({ maxPendingSeconds: 2.5 })
   const detector = createOnsetDetector()
   let status: RecognizerStatus = 'idle'
   let rec: SpeechRecognitionLike | null = null

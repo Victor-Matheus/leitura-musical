@@ -50,8 +50,9 @@ function setup() {
     },
   }
   const listeners = new Set<(s: Float32Array, t: number) => void>()
+  const context = { currentTime: 3 }
   const mic = {
-    context: { currentTime: 3 },
+    context,
     sampleRate: RATE,
     onFrame(cb: (s: Float32Array, t: number) => void) {
       listeners.add(cb)
@@ -68,7 +69,7 @@ function setup() {
     frame(0.5, t)
     frame(0, t + 0.1)
   }
-  return { model, kaldis, kaldiArgs, mic, listeners, frame, burst, wasTerminated: () => terminated }
+  return { model, kaldis, kaldiArgs, mic, context, listeners, frame, burst, wasTerminated: () => terminated }
 }
 
 async function started(onFinalWords?: (w: FinalWord[], s: number) => void) {
@@ -86,8 +87,8 @@ async function started(onFinalWords?: (w: FinalWord[], s: number) => void) {
 
 test('parciais crescentes emitem só as sílabas novas', async () => {
   const { kaldi, burst, steps } = await started()
-  burst(1)
-  burst(2)
+  burst(2.2)
+  burst(2.7)
   kaldi.partial('dó')
   kaldi.partial('dó ré')
   kaldi.final('dó ré')
@@ -96,17 +97,17 @@ test('parciais crescentes emitem só as sílabas novas', async () => {
 
 test('após result, a próxima fala recomeça a contagem', async () => {
   const { kaldi, burst, steps } = await started()
-  burst(1)
+  burst(2.2)
   kaldi.final('dó')
-  burst(2)
+  burst(2.7)
   kaldi.partial('dó')
   expect(steps).toEqual(['C', 'C'])
 })
 
 test('result emite só o que faltou e ignora [unk]', async () => {
   const { kaldi, burst, steps } = await started()
-  burst(1)
-  burst(2)
+  burst(2.2)
+  burst(2.7)
   kaldi.partial('dó')
   kaldi.final('dó [unk] mi')
   expect(steps).toEqual(['C', 'E'])
@@ -114,10 +115,10 @@ test('result emite só o que faltou e ignora [unk]', async () => {
 
 test('o onset do evento vem do detector e arrivedAt do relógio do áudio', async () => {
   const { kaldi, burst, events } = await started()
-  burst(1)
+  burst(2.2)
   kaldi.partial('dó')
   expect(events).toHaveLength(1)
-  expect(events[0].onset).toBeCloseTo(1, 1)
+  expect(events[0].onset).toBeCloseTo(2.2, 1)
   expect(events[0].arrivedAt).toBe(3)
 })
 
@@ -308,4 +309,28 @@ test('carga que falha limpa o singleton e a próxima tentativa carrega de novo',
   FakeLoadingModel.instances[1].handlers.load({ result: true })
   await p2
   expect(second.status).toBe('ready')
+})
+
+test('result final descarta onsets pendentes mais velhos que 0,5 s', async () => {
+  const { kaldi, burst, events, context } = await started()
+  burst(2.0) // "dó"
+  burst(2.3) // ruído dentro da mesma fala, nunca rotulado
+  burst(2.8) // começo da próxima fala
+  context.currentTime = 2.9
+  kaldi.final('dó')
+  context.currentTime = 3.1
+  kaldi.partial('ré')
+  expect(events.map((e) => e.step)).toEqual(['C', 'D'])
+  expect(events[0].onset).toBeCloseTo(2.0, 1)
+  expect(events[1].onset).toBeCloseTo(2.8, 1)
+})
+
+test('onset órfão expira em 1 s no motor local', async () => {
+  const { kaldi, burst, events, context } = await started()
+  burst(1.0) // órfão
+  burst(2.2)
+  context.currentTime = 2.5
+  kaldi.partial('mi')
+  expect(events).toHaveLength(1)
+  expect(events[0].onset).toBeCloseTo(2.2, 1)
 })
