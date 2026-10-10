@@ -7,8 +7,11 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: 'md' | 'lg'
 }
 
-const BASE =
-  'inline-flex items-center justify-center gap-2 font-semibold transition-all'
+/** Foco visível para quem navega pelo teclado. */
+export const FOCUS_RING =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]'
+
+const BASE = `inline-flex items-center justify-center gap-2 font-semibold transition-all ${FOCUS_RING}`
 
 const VARIANTS = {
   primary:

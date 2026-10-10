@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from 'react'
+import { FOCUS_RING } from './Button'
 
 type CardProps = HTMLAttributes<HTMLElement> & {
   variant?: 'light' | 'dark'
@@ -28,7 +29,7 @@ export function Card({
     return (
       <button
         type="button"
-        className={`${classes} w-full`}
+        className={`${classes} w-full ${FOCUS_RING}`}
         {...(rest as HTMLAttributes<HTMLButtonElement>)}
       />
     )

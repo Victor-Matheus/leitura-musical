@@ -13,10 +13,10 @@ export function IconBox({
   tone?: 'soft' | 'dark'
 }) {
   return (
-    <div
+    <span
       className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${TONES[tone]}`}
     >
       <Icon size={24} strokeWidth={1.75} aria-hidden="true" />
-    </div>
+    </span>
   )
 }

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { Play } from 'lucide-react'
-import { Badge, Button, Card } from './index'
+import { Badge, Button, Card, IconBox } from './index'
 
 describe('componentes base', () => {
   afterEach(cleanup)
@@ -45,5 +45,24 @@ describe('componentes base', () => {
   it('Badge renderiza o texto', () => {
     render(<Badge>Iniciante</Badge>)
     expect(screen.getByText('Iniciante').textContent).toBe('Iniciante')
+  })
+
+  it('Button e Card as="button" têm foco visível', () => {
+    render(
+      <>
+        <Button>Ir</Button>
+        <Card as="button">Lição</Card>
+      </>,
+    )
+    for (const name of ['Ir', 'Lição']) {
+      const cls = screen.getByRole('button', { name }).className
+      expect(cls).toContain('focus-visible:outline-2')
+      expect(cls).toContain('focus-visible:outline-[var(--primary)]')
+    }
+  })
+
+  it('IconBox é um span (válido dentro de <button>)', () => {
+    const { container } = render(<IconBox icon={Play} />)
+    expect(container.firstElementChild?.tagName).toBe('SPAN')
   })
 })
