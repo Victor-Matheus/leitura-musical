@@ -1,7 +1,7 @@
 import { describe, expect, test, vi, afterEach } from 'vitest'
 import type { MicInput } from '../audio/micInput'
 import type { NoteRecognizer } from './types'
-import { selectRecognizer } from './selectRecognizer'
+import { preloadLocalModel, selectRecognizer } from './selectRecognizer'
 
 const mic = {} as MicInput
 
@@ -106,5 +106,21 @@ describe('selectRecognizer', () => {
     })
     expect(r).toBeNull()
     expect(online.stop).toHaveBeenCalled()
+  })
+})
+
+describe('preloadLocalModel', () => {
+  test('modelo em cache → aquece o modelo', async () => {
+    const preload = vi.fn()
+    preloadLocalModel({ isModelCached: async () => true, preload })
+    await vi.waitFor(() => expect(preload).toHaveBeenCalledTimes(1))
+  })
+
+  test('sem cache ou com pouca memória → não aquece', async () => {
+    const preload = vi.fn()
+    preloadLocalModel({ isModelCached: async () => false, preload })
+    preloadLocalModel({ isModelCached: async () => true, deviceMemory: 1, preload })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(preload).not.toHaveBeenCalled()
   })
 })

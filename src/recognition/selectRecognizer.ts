@@ -3,6 +3,7 @@ import type { NoteRecognizer } from './types'
 import { createVoskRecognizer } from './voskRecognizer'
 import { createWebSpeechRecognizer, hasWebSpeech } from './webSpeechRecognizer'
 import { isModelCached } from './modelStore'
+import { preloadModel } from './voskModelCache'
 
 export interface SelectDeps {
   createLocal: (mic: MicInput) => NoteRecognizer
@@ -17,6 +18,28 @@ const defaultDeps: SelectDeps = {
   createOnline: (mic) => (hasWebSpeech() ? createWebSpeechRecognizer(mic) : null),
   isModelCached,
   deviceMemory: (navigator as unknown as { deviceMemory?: number }).deviceMemory,
+}
+
+/** Mínimo de memória do aparelho (GB) para tentar o motor local. */
+const MIN_DEVICE_MEMORY = 2
+
+async function canUseLocal(d: SelectDeps): Promise<boolean> {
+  return (d.deviceMemory ?? 4) >= MIN_DEVICE_MEMORY && (await d.isModelCached())
+}
+
+/**
+ * Aquece o modelo local em segundo plano (ao abrir a Prática), para que o
+ * start() da lição só precise criar o KaldiRecognizer.
+ */
+export function preloadLocalModel(deps: Partial<SelectDeps> & { preload?: () => void } = {}): void {
+  const d: SelectDeps = { ...defaultDeps, ...deps }
+  const preload = deps.preload ?? preloadModel
+  canUseLocal(d).then(
+    (ok) => {
+      if (ok) preload()
+    },
+    () => {},
+  )
 }
 
 function startWithTimeout(rec: NoteRecognizer, timeoutSeconds: number): Promise<void> {
@@ -42,7 +65,7 @@ export async function selectRecognizer(
 ): Promise<NoteRecognizer | null> {
   const d: SelectDeps = { ...defaultDeps, ...deps }
 
-  if ((await d.isModelCached()) && (d.deviceMemory ?? 4) >= 2) {
+  if (await canUseLocal(d)) {
     const local = d.createLocal(mic)
     try {
       await startWithTimeout(local, timeoutSeconds)

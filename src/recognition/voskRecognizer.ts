@@ -1,26 +1,15 @@
 import type { MicInput } from '../audio/micInput'
 import { createAligner } from './aligner'
-import { cleanupStaleVoskStore, getModelUrl } from './modelStore'
 import { createOnsetDetector } from './onsetDetector'
 import { textToSteps, VOSK_GRAMMAR } from './syllables'
 import type { NoteRecognizer, RecognizerError, RecognizerStatus, SyllableEvent } from './types'
+import { disposeModel, getWarmModel } from './voskModelCache'
+import type { VoskModelLike, VoskRecognizerLike } from './voskModelCache'
 
 /** Escala aplicada às amostras antes do Vosk. Usar 32768 se o Kaldi não reconhecer floats em [-1, 1]. */
 export const SAMPLE_SCALE = 1
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export interface VoskRecognizerLike {
-  on(event: 'result' | 'partialresult' | 'error', cb: (m: any) => void): void
-  setWords(v: boolean): void
-  acceptWaveformFloat(buf: Float32Array, sampleRate: number): void
-  remove(): void
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
-
-export interface VoskModelLike {
-  KaldiRecognizer: new (sampleRate: number, grammar?: string) => VoskRecognizerLike
-  terminate(): void
-}
+export type { VoskModelLike, VoskRecognizerLike }
 
 export interface FinalWord {
   word: string
@@ -30,25 +19,22 @@ export interface FinalWord {
 }
 
 export interface VoskRecognizerDeps {
+  /** Padrão: o modelo aquecido compartilhado da página (voskModelCache). */
   loadModel?: () => Promise<VoskModelLike>
+  /** Descarta o modelo compartilhado quando ele se mostra quebrado. */
+  discardModel?: () => void
   onFinalWords?: (words: FinalWord[], streamStart: number) => void
 }
 
-async function defaultLoadModel(): Promise<VoskModelLike> {
-  await cleanupStaleVoskStore()
-  const { createModel } = await import('vosk-browser')
-  return (await createModel(getModelUrl())) as unknown as VoskModelLike
-}
-
 export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {}): NoteRecognizer {
-  const loadModel = deps.loadModel ?? defaultLoadModel
+  const loadModel = deps.loadModel ?? getWarmModel
+  const discardModel = deps.discardModel ?? disposeModel
   const syllableListeners = new Set<(e: SyllableEvent) => void>()
   const statusListeners = new Set<(s: RecognizerStatus, err?: RecognizerError) => void>()
   const detector = createOnsetDetector()
   const aligner = createAligner()
 
   let status: RecognizerStatus = 'idle'
-  let model: VoskModelLike | null = null
   let kaldi: VoskRecognizerLike | null = null
   let unsubscribeFrames: (() => void) | null = null
   let streamStart: number | null = null
@@ -69,13 +55,12 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
     emittedInUtterance = Math.max(emittedInUtterance, steps.length)
   }
 
+  /** Solta o KaldiRecognizer desta execução; o modelo é compartilhado e fica vivo. */
   function release() {
     unsubscribeFrames?.()
     unsubscribeFrames = null
     kaldi?.remove()
     kaldi = null
-    model?.terminate()
-    model = null
   }
 
   return {
@@ -85,8 +70,9 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
     },
     async start() {
       // Cada stop() invalida o start() em andamento. Se isso ocorrer durante o
-      // carregamento, o modelo tardio é encerrado e start() rejeita 'load-failed'
-      // sem alterar o status (que já voltou a 'idle').
+      // carregamento, start() rejeita 'load-failed' sem alterar o status (que já
+      // voltou a 'idle'). O modelo compartilhado segue carregando: a próxima
+      // lição o encontra pronto.
       const myGeneration = ++generation
       const stopped = () => myGeneration !== generation
       setStatus('loading')
@@ -97,11 +83,7 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
         if (!stopped()) setStatus('error', 'load-failed')
         throw new Error('load-failed')
       }
-      if (stopped()) {
-        loaded.terminate()
-        throw new Error('load-failed')
-      }
-      model = loaded
+      if (stopped()) throw new Error('load-failed')
       try {
         const recognizer = new loaded.KaldiRecognizer(mic.sampleRate, JSON.stringify(VOSK_GRAMMAR))
         kaldi = recognizer
@@ -126,6 +108,8 @@ export function createVoskRecognizer(mic: MicInput, deps: VoskRecognizerDeps = {
         })
       } catch {
         release()
+        // O KaldiRecognizer só falha assim com o modelo encerrado ou quebrado.
+        discardModel()
         setStatus('error', 'load-failed')
         throw new Error('load-failed')
       }

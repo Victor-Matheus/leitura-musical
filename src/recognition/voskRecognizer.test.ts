@@ -1,8 +1,9 @@
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import type { MicInput } from '../audio/micInput'
 import { VOSK_GRAMMAR } from './syllables'
 import type { RecognizerStatus, SyllableEvent } from './types'
 import { createVoskRecognizer } from './voskRecognizer'
+import { createWarmModelCache, openVoskModel } from './voskModelCache'
 import type { FinalWord, VoskModelLike, VoskRecognizerLike } from './voskRecognizer'
 
 const RATE = 16000
@@ -172,16 +173,16 @@ test('erro do recognizer após ready vira status error/crashed', async () => {
   expect(seen).toEqual([['error', 'crashed']])
 })
 
-test('stop libera recognizer e modelo e para de ouvir o microfone', async () => {
+test('stop libera o recognizer, mantém o modelo compartilhado e para de ouvir o microfone', async () => {
   const { rec, kaldi, listeners, wasTerminated } = await started()
   rec.stop()
   expect(kaldi.removed).toBe(true)
-  expect(wasTerminated()).toBe(true)
+  expect(wasTerminated()).toBe(false)
   expect(listeners.size).toBe(0)
   expect(rec.status).toBe('idle')
 })
 
-test('stop() durante o carregamento: o modelo tardio é encerrado e o status nunca vira ready', async () => {
+test('stop() durante o carregamento: o modelo compartilhado segue vivo e o status nunca vira ready', async () => {
   const env = setup()
   let resolveModel!: (m: VoskModelLike) => void
   const rec = createVoskRecognizer(env.mic, {
@@ -193,28 +194,118 @@ test('stop() durante o carregamento: o modelo tardio é encerrado e o status nun
   rec.stop()
   resolveModel(env.model)
   await expect(pending).rejects.toThrow('load-failed')
-  expect(env.wasTerminated()).toBe(true)
+  expect(env.wasTerminated()).toBe(false)
   expect(env.kaldis).toHaveLength(0)
   expect(env.listeners.size).toBe(0)
   expect(seen).not.toContain('ready')
   expect(rec.status).toBe('idle')
 })
 
-test('KaldiRecognizer lançando: load-failed e model.terminate chamado', async () => {
+test('KaldiRecognizer lançando: load-failed e o modelo compartilhado é descartado', async () => {
   const env = setup()
-  let terminated = false
   const badModel: VoskModelLike = {
     KaldiRecognizer: class {
       constructor() {
         throw new Error('boom')
       }
     } as unknown as VoskModelLike['KaldiRecognizer'],
-    terminate: () => {
-      terminated = true
-    },
+    terminate: () => {},
   }
-  const rec = createVoskRecognizer(env.mic, { loadModel: async () => badModel })
+  const discardModel = vi.fn()
+  const rec = createVoskRecognizer(env.mic, { loadModel: async () => badModel, discardModel })
   await expect(rec.start()).rejects.toThrow('load-failed')
-  expect(terminated).toBe(true)
+  expect(discardModel).toHaveBeenCalledTimes(1)
   expect(rec.status).toBe('error')
+})
+
+/** Model falso no formato do vosk-browser: eventos do worker e campo privado `worker`. */
+class FakeLoadingModel {
+  static instances: FakeLoadingModel[] = []
+  handlers: Record<string, (m: { result?: boolean; error?: string }) => void> = {}
+  worker = { terminate: vi.fn() }
+  terminate = vi.fn()
+  kaldis: FakeKaldi[] = []
+  KaldiRecognizer: VoskModelLike['KaldiRecognizer']
+  url: string
+  constructor(url: string) {
+    this.url = url
+    FakeLoadingModel.instances.push(this)
+    const kaldis = this.kaldis
+    this.KaldiRecognizer = class extends FakeKaldi {
+      constructor() {
+        super()
+        kaldis.push(this)
+      }
+    }
+  }
+  on(event: string, cb: (m: { result?: boolean; error?: string }) => void) {
+    this.handlers[event] = cb
+  }
+}
+
+function realisticCache() {
+  FakeLoadingModel.instances = []
+  return createWarmModelCache(() => openVoskModel('https://app.test/models/m.tar.gz', FakeLoadingModel))
+}
+
+test('worker emite error: start() rejeita load-failed e o Worker é encerrado', async () => {
+  const env = setup()
+  const cache = realisticCache()
+  const rec = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel, discardModel: cache.disposeModel })
+  const pending = rec.start()
+  await Promise.resolve()
+  FakeLoadingModel.instances[0].handlers.error({ error: 'fetch failed' })
+  await expect(pending).rejects.toThrow('load-failed')
+  expect(rec.status).toBe('error')
+  expect(FakeLoadingModel.instances[0].worker.terminate).toHaveBeenCalledTimes(1)
+})
+
+test('worker responde load:false: start() rejeita load-failed e o Worker é encerrado', async () => {
+  const env = setup()
+  const cache = realisticCache()
+  const rec = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel, discardModel: cache.disposeModel })
+  const pending = rec.start()
+  await Promise.resolve()
+  FakeLoadingModel.instances[0].handlers.load({ result: false })
+  await expect(pending).rejects.toThrow('load-failed')
+  expect(FakeLoadingModel.instances[0].worker.terminate).toHaveBeenCalledTimes(1)
+})
+
+test('dois reconhecedores compartilham uma única carga do modelo', async () => {
+  const env = setup()
+  const cache = realisticCache()
+  const a = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel, discardModel: cache.disposeModel })
+  const b = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel, discardModel: cache.disposeModel })
+  const pa = a.start()
+  const pb = b.start()
+  await Promise.resolve()
+  expect(FakeLoadingModel.instances).toHaveLength(1)
+  FakeLoadingModel.instances[0].handlers.load({ result: true })
+  await Promise.all([pa, pb])
+  a.stop()
+  const c = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel, discardModel: cache.disposeModel })
+  await c.start()
+  const model = FakeLoadingModel.instances[0]
+  expect(FakeLoadingModel.instances).toHaveLength(1)
+  expect(model.kaldis).toHaveLength(3)
+  expect(model.kaldis[0].removed).toBe(true)
+  expect(model.worker.terminate).not.toHaveBeenCalled()
+  expect(model.terminate).not.toHaveBeenCalled()
+})
+
+test('carga que falha limpa o singleton e a próxima tentativa carrega de novo', async () => {
+  const env = setup()
+  const cache = realisticCache()
+  const first = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel })
+  const p1 = first.start()
+  await Promise.resolve()
+  FakeLoadingModel.instances[0].handlers.error({ error: 'x' })
+  await expect(p1).rejects.toThrow('load-failed')
+  const second = createVoskRecognizer(env.mic, { loadModel: cache.getWarmModel })
+  const p2 = second.start()
+  await Promise.resolve()
+  expect(FakeLoadingModel.instances).toHaveLength(2)
+  FakeLoadingModel.instances[1].handlers.load({ result: true })
+  await p2
+  expect(second.status).toBe('ready')
 })

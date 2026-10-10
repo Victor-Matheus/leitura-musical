@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle2, Download } from 'lucide-react'
 import { Button, Card, IconBox } from './ui'
 import { downloadModel, isModelCached } from '../recognition/modelStore'
+import { preloadModel } from '../recognition/voskModelCache'
 
 type Status = 'checking' | 'idle' | 'downloading' | 'done' | 'error' | 'cached'
 
@@ -25,6 +26,8 @@ export function ModelDownload() {
     setStatus('downloading')
     try {
       await downloadModel(setProgress)
+      // Carrega já, com rede: o worker grava o modelo no IDBFS para uso offline.
+      preloadModel()
       setStatus('done')
     } catch {
       setStatus('error')

@@ -10,6 +10,7 @@ import { useTimelinePlayer } from '../engine/useTimelinePlayer'
 import { accuracy, latencyStats } from '../recognition/diagnostics'
 import type { LatencyStats } from '../recognition/diagnostics'
 import { downloadModel, isModelCached } from '../recognition/modelStore'
+import { preloadModel } from '../recognition/voskModelCache'
 import type { NoteRecognizer, SyllableEvent } from '../recognition/types'
 import { createVoskRecognizer } from '../recognition/voskRecognizer'
 import type { FinalWord } from '../recognition/voskRecognizer'
@@ -178,6 +179,7 @@ export function Diagnostico() {
     setProgress(0)
     try {
       await downloadModel(setProgress)
+      preloadModel()
       setCached(true)
     } catch (e) {
       setError(errorMessage(e))

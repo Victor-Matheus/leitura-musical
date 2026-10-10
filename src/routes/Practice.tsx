@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { BeatPulse } from '../components/BeatPulse'
@@ -11,6 +12,7 @@ import { usePracticeSession } from '../engine/usePracticeSession'
 import type { FeedbackState } from '../engine/usePracticeSession'
 import { noteName } from '../data/notes'
 import type { Piece } from '../data/notes'
+import { preloadLocalModel } from '../recognition/selectRecognizer'
 import { usePracticeStore } from '../store/usePracticeStore'
 
 // Tokens de cor da nota atual; o NoteStaff resolve cada um com readToken ao desenhar.
@@ -44,6 +46,11 @@ function PracticeSession({ piece }: { piece: Piece }) {
   const settings = usePracticeStore((s) => s.settings)
   const setSettings = usePracticeStore((s) => s.setSettings)
   const saveSession = usePracticeStore((s) => s.saveSession)
+
+  // Um modelo local aquecido por página: a lição só cria o KaldiRecognizer.
+  useEffect(() => {
+    if (settings.voiceEnabled) preloadLocalModel()
+  }, [settings.voiceEnabled])
 
   const session = usePracticeSession({
     piece,
