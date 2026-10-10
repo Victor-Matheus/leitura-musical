@@ -3,7 +3,7 @@ import type { MicInput } from '../audio/micInput'
 import { createAudioContext, openMic } from '../audio/micInput'
 import type { Piece } from '../data/notes'
 import { SOLFEGE } from '../data/notes'
-import { selectRecognizer } from '../recognition/selectRecognizer'
+import { markLocalCrashed, selectRecognizer } from '../recognition/selectRecognizer'
 import type { NoteRecognizer, RecognizerError, SyllableEvent } from '../recognition/types'
 import type { NoteResult } from '../store/usePracticeStore'
 import type { Clock } from './clock'
@@ -21,6 +21,8 @@ export interface SessionDeps {
   openMic: (ctx: AudioContext) => Promise<MicInput>
   select: (mic: MicInput, timeoutSeconds: number) => Promise<NoteRecognizer | null>
   clockFor: (ctx: AudioContext | null) => Clock
+  /** Chamado quando o motor local cai: as próximas lições usam o plano B. */
+  markLocalCrashed: () => void
 }
 
 export interface PracticeSession {
@@ -54,6 +56,7 @@ const defaultDeps: SessionDeps = {
   openMic,
   select: (mic, timeoutSeconds) => selectRecognizer(mic, timeoutSeconds),
   clockFor: (ctx) => (ctx ? audioClock(ctx) : performanceClock),
+  markLocalCrashed,
 }
 
 /** O motor precisa estar pronto antes do fim da contagem de entrada. */
@@ -215,6 +218,7 @@ export function usePracticeSession(opts: {
         run.silent = true
         offSyllable()
         recognizer.stop()
+        if (recognizer.kind === 'local' && (err ?? 'crashed') === 'crashed') d.markLocalCrashed()
         console.warn(`[voz] reconhecedor ${recognizer.kind} falhou (${err ?? 'crashed'}); lição segue sem voz`)
         setVoiceError(err ?? 'crashed')
         setEngine('silent')

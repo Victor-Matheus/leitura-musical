@@ -3,7 +3,22 @@ import type { NoteRecognizer } from './types'
 import { createVoskRecognizer } from './voskRecognizer'
 import { createWebSpeechRecognizer, hasWebSpeech } from './webSpeechRecognizer'
 import { isModelCached } from './modelStore'
-import { preloadModel } from './voskModelCache'
+import { disposeModel, preloadModel } from './voskModelCache'
+
+// Spec §6: depois que o Vosk cai numa lição, as próximas usam o plano B.
+// Vale pela vida da página (um recarregamento tenta o local de novo).
+let localCrashed = false
+
+/** Registra a queda do motor local e libera o modelo, que pode ter ficado inutilizável. */
+export function markLocalCrashed(): void {
+  localCrashed = true
+  disposeModel()
+}
+
+/** Só para testes. */
+export function resetLocalCrashed(): void {
+  localCrashed = false
+}
 
 export interface SelectDeps {
   createLocal: (mic: MicInput) => NoteRecognizer
@@ -11,6 +26,7 @@ export interface SelectDeps {
   createOnline: (mic: MicInput) => NoteRecognizer | null
   isModelCached: () => Promise<boolean>
   deviceMemory?: number
+  localCrashed: () => boolean
 }
 
 const defaultDeps: SelectDeps = {
@@ -18,12 +34,14 @@ const defaultDeps: SelectDeps = {
   createOnline: (mic) => (hasWebSpeech() ? createWebSpeechRecognizer(mic) : null),
   isModelCached,
   deviceMemory: (navigator as unknown as { deviceMemory?: number }).deviceMemory,
+  localCrashed: () => localCrashed,
 }
 
 /** Mínimo de memória do aparelho (GB) para tentar o motor local. */
 const MIN_DEVICE_MEMORY = 2
 
 async function canUseLocal(d: SelectDeps): Promise<boolean> {
+  if (d.localCrashed()) return false
   return (d.deviceMemory ?? 4) >= MIN_DEVICE_MEMORY && (await d.isModelCached())
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi, afterEach } from 'vitest'
 import type { MicInput } from '../audio/micInput'
 import type { NoteRecognizer } from './types'
-import { preloadLocalModel, selectRecognizer } from './selectRecognizer'
+import { markLocalCrashed, preloadLocalModel, resetLocalCrashed, selectRecognizer } from './selectRecognizer'
 
 const mic = {} as MicInput
 
@@ -120,6 +120,31 @@ describe('preloadLocalModel', () => {
     const preload = vi.fn()
     preloadLocalModel({ isModelCached: async () => false, preload })
     preloadLocalModel({ isModelCached: async () => true, deviceMemory: 1, preload })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(preload).not.toHaveBeenCalled()
+  })
+})
+
+describe('queda do motor local', () => {
+  afterEach(() => resetLocalCrashed())
+
+  test('depois de markLocalCrashed as próximas lições vão direto ao plano B', async () => {
+    markLocalCrashed()
+    const createLocal = vi.fn()
+    const online = fake('online', async () => {})
+    const r = await selectRecognizer(mic, 5, {
+      createLocal,
+      createOnline: () => online,
+      isModelCached: async () => true,
+    })
+    expect(r).toBe(online)
+    expect(createLocal).not.toHaveBeenCalled()
+  })
+
+  test('depois da queda o modelo não é mais aquecido', async () => {
+    markLocalCrashed()
+    const preload = vi.fn()
+    preloadLocalModel({ isModelCached: async () => true, preload })
     await new Promise((r) => setTimeout(r, 0))
     expect(preload).not.toHaveBeenCalled()
   })

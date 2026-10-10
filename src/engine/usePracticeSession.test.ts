@@ -48,6 +48,7 @@ function setup(opts: { voiceEnabled?: boolean; deps?: Partial<SessionDeps> } = {
     openMic: async () => mic,
     select,
     clockFor: () => performanceClock,
+    markLocalCrashed: () => {},
     ...opts.deps,
   }
   const hook = renderHook(() =>
@@ -314,4 +315,27 @@ test('pausar e retomar limpam o feedback e a última sílaba ouvida', async () =
   act(() => result.current.resume())
   expect(result.current.feedback).toBe('idle')
   expect(result.current.lastHeard).toBeNull()
+})
+
+test('queda do motor local marca o plano B para as próximas lições', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const markLocalCrashed = vi.fn()
+  const { result, rec } = setup({ deps: { markLocalCrashed } })
+  act(() => result.current.start())
+  await flush()
+  act(() => rec.fail('crashed'))
+  expect(markLocalCrashed).toHaveBeenCalledTimes(1)
+  warn.mockRestore()
+})
+
+test('queda do motor online não marca o local', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const markLocalCrashed = vi.fn()
+  const online = createFakeRecognizer('online')
+  const { result } = setup({ deps: { markLocalCrashed, select: async () => online } })
+  act(() => result.current.start())
+  await flush()
+  act(() => online.fail('crashed'))
+  expect(markLocalCrashed).not.toHaveBeenCalled()
+  warn.mockRestore()
 })
