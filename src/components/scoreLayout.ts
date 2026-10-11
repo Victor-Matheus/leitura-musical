@@ -3,7 +3,7 @@
 
 import { Accidental, BarNote, Dot, StaveNote } from 'vexflow'
 import type { Note as VexNote } from 'vexflow'
-import type { Duration } from '../data/notes'
+import type { Duration, Note } from '../data/notes'
 import { vexKey } from '../data/notes'
 import { MAJOR_KEYS, majorScale, solfege } from '../theory/music'
 import type { ScoreBlock, ScoreElement } from '../theory/types'
@@ -168,4 +168,17 @@ export function buildElements(elements: ScoreElement[], opts: BuildOptions): Vex
     sn.getModifiers().forEach((m) => m.setStyle(style))
     return sn
   })
+}
+
+/** Uma nota da prática por voz (/praticar), com acidente e ponto, toda numa cor. */
+export function buildStaveNote(note: Note, clef: 'treble' | 'bass', color: string): StaveNote {
+  const style = { fillStyle: color, strokeStyle: color }
+  const sn = new StaveNote({ keys: [vexKey(note)], duration: vexDuration(note.duration, note.dots), clef })
+  if (note.accidental) sn.addModifier(new Accidental(note.accidental), 0)
+  if (note.dots === 1) Dot.buildAndAttach([sn], { all: true })
+  sn.setStyle(style)
+  sn.getModifiers().forEach((m) => m.setStyle(style))
+  // linhas suplementares têm estilo próprio (padrão #444, invisível no alto contraste)
+  sn.setLedgerLineStyle(style)
+  return sn
 }

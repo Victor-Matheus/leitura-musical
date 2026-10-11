@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { Accidental } from 'vexflow'
 import type { ScoreBlock, ScoreElement } from '../theory/types'
 import { ScoreView } from './ScoreView'
-import { buildElements, describeScore, highlightPerLine, splitIntoLines, vexDuration } from './scoreLayout'
+import { buildElements, buildStaveNote, describeScore, highlightPerLine, splitIntoLines, vexDuration } from './scoreLayout'
 
 // O VexFlow mede texto num canvas; o jsdom não tem canvas e avisa a cada chamada.
 // Devolver null (o mesmo que o jsdom devolve) só silencia o aviso.
@@ -170,6 +170,23 @@ describe('buildElements', () => {
     expect(fSharp.getModifiersByType('Accidental')).toHaveLength(0)
     expect(cSharp.getModifiersByType('Accidental')).toHaveLength(0)
     expect(gSharp.getModifiersByType('Accidental')).toHaveLength(1)
+  })
+})
+
+describe('buildStaveNote (prática por voz)', () => {
+  it('desenha o ponto da mínima pontuada na cor da nota', () => {
+    const sn = buildStaveNote({ step: 'G', octave: 4, duration: 'h', dots: 1 }, 'treble', '#123456')
+    expect(sn.getDuration()).toBe('h')
+    expect(sn.isDotted()).toBe(true)
+    const dots = sn.getModifiersByType('Dot')
+    expect(dots).toHaveLength(1)
+    expect(dots[0].getStyle()?.fillStyle).toBe('#123456')
+  })
+
+  it('sem ponto não põe Dot e mantém o acidente', () => {
+    const sn = buildStaveNote({ step: 'F', accidental: '#', octave: 4, duration: 'q' }, 'treble', '#000')
+    expect(sn.getModifiersByType('Dot')).toHaveLength(0)
+    expect(sn.getModifiersByType('Accidental')).toHaveLength(1)
   })
 })
 
