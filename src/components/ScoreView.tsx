@@ -3,7 +3,7 @@ import { Formatter, Renderer, Stave, Voice } from 'vexflow'
 import type { RenderContext } from 'vexflow'
 import { readToken } from '../theme/readToken'
 import type { ScoreBlock } from '../theory/types'
-import { buildElements, describeScore, splitIntoLines } from './scoreView.ts'
+import { buildElements, describeScore, splitIntoLines } from './scoreLayout'
 
 type ScoreViewProps = ScoreBlock & {
   /** VexFlow desenha com estilo inline: as cores vêm dos tokens no momento do desenho,

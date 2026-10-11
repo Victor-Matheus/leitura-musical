@@ -1,8 +1,8 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { ScoreBlock, ScoreElement } from '../theory/types'
-import { ScoreView } from './ScoreView.tsx'
-import { buildElements, describeScore, splitIntoLines, vexDuration } from './scoreView.ts'
+import { ScoreView } from './ScoreView'
+import { buildElements, describeScore, splitIntoLines, vexDuration } from './scoreLayout'
 
 // O VexFlow mede texto num canvas; o jsdom não tem canvas e avisa a cada chamada.
 // Devolver null (o mesmo que o jsdom devolve) só silencia o aviso.
