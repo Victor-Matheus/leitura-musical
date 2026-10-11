@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Modelo de voz baixado por scripts/fetch-model.mjs
+public/models/
