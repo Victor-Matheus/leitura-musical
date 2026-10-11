@@ -156,6 +156,27 @@ describe('HymnEditor', () => {
     expect(hymn.notes[1]).toEqual({ step: 'F', octave: 5, duration: 'q' })
   })
 
+  it('clave de fá usa as oitavas 2 a 4 e a troca de clave ajusta a oitava', () => {
+    renderAt('/hinos/novo')
+    const up = () => screen.getByRole('button', { name: 'Oitava acima' }) as HTMLButtonElement
+    const down = () => screen.getByRole('button', { name: 'Oitava abaixo' }) as HTMLButtonElement
+    click('Oitava acima')
+    expect(up().disabled).toBe(true) // sol: até 5
+    fireEvent.change(screen.getByLabelText('Clave'), { target: { value: 'bass' } })
+    expect(up().disabled).toBe(true) // fá: 5 vira 4, o máximo
+    click('Dó')
+    click('Oitava abaixo')
+    click('Oitava abaixo')
+    expect(down().disabled).toBe(true) // fá: até 2
+    click('Dó')
+    fireEvent.change(screen.getByLabelText('Clave'), { target: { value: 'treble' } })
+    expect(down().disabled).toBe(true) // sol: 2 vira 3, o mínimo
+    click('Dó')
+    click('Salvar')
+    const [hymn] = useHymnStore.getState().hymns
+    expect(hymn.notes.map((n) => n.octave)).toEqual([4, 2, 3])
+  })
+
   it('Salvar e Praticar ficam desabilitados com 0 notas', () => {
     renderAt('/hinos/novo')
     expect((screen.getByRole('button', { name: 'Salvar' }) as HTMLButtonElement).disabled).toBe(true)

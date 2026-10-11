@@ -18,8 +18,11 @@ const DURATIONS: { value: Duration; label: string }[] = [
   { value: 'q', label: 'Semínima' },
   { value: '8', label: 'Colcheia' },
 ]
-const MIN_OCTAVE = 3
-const MAX_OCTAVE = 5
+// Oitavas do teclado por clave: Dó3 a Si5 na clave de sol, Dó2 a Si4 na de fá.
+const OCTAVE_RANGE: Record<'treble' | 'bass', { min: number; max: number }> = {
+  treble: { min: 3, max: 5 },
+  bass: { min: 2, max: 4 },
+}
 const PREVIEW_NOTES = 16
 
 function notesLabel(n: number) {
@@ -70,6 +73,7 @@ function EditorForm({ initial }: { initial?: UserHymn }) {
   const [status, setStatus] = useState<string | null>(null)
   const [shownCode, setShownCode] = useState<string | null>(null)
 
+  const { min: minOctave, max: maxOctave } = OCTAVE_RANGE[clef]
   const full = notes.length >= MAX_HYMN_NOTES
   const empty = notes.length === 0
   const finalTitle = title.trim() || 'Sem título'
@@ -162,7 +166,10 @@ function EditorForm({ initial }: { initial?: UserHymn }) {
           <select
             value={clef}
             onChange={(e) => {
-              setClef(e.target.value as 'treble' | 'bass')
+              const next = e.target.value as 'treble' | 'bass'
+              const range = OCTAVE_RANGE[next]
+              setClef(next)
+              setOctave((o) => Math.min(range.max, Math.max(range.min, o)))
               setStatus(null)
             }}
             className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-base text-[var(--text)]"
@@ -219,7 +226,7 @@ function EditorForm({ initial }: { initial?: UserHymn }) {
                 icon={Minus}
                 aria-label="Oitava abaixo"
                 className="px-3! py-2!"
-                disabled={octave <= MIN_OCTAVE}
+                disabled={octave <= minOctave}
                 onClick={() => setOctave((o) => o - 1)}
               />
               <span className="min-w-8 text-center text-xl font-bold text-[var(--text)]" aria-live="polite">
@@ -230,7 +237,7 @@ function EditorForm({ initial }: { initial?: UserHymn }) {
                 icon={Plus}
                 aria-label="Oitava acima"
                 className="px-3! py-2!"
-                disabled={octave >= MAX_OCTAVE}
+                disabled={octave >= maxOctave}
                 onClick={() => setOctave((o) => o + 1)}
               />
             </div>
