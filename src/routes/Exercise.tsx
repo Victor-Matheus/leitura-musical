@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { QuestionCard } from '../components/QuestionCard'
 import { Button, Card } from '../components/ui'
 import { getExercise, getLesson } from '../theory/curriculum'
-import { GENERATORS } from '../theory/generators'
+import { generateRound } from '../theory/generators'
 import { mulberry32, randomSeed } from '../theory/rng'
 import { usePracticeStore } from '../store/usePracticeStore'
 import { useProgressStore, PASS_SCORE } from '../store/useProgressStore'
@@ -28,8 +28,7 @@ export function Exercise({ seed: seedProp }: { seed?: number }) {
 
   const questions = useMemo(() => {
     if (!spec) return []
-    const rng = mulberry32(seed)
-    return Array.from({ length: TOTAL }, () => GENERATORS[spec.type](spec.params, rng))
+    return generateRound(spec, mulberry32(seed), TOTAL)
   }, [spec, seed])
 
   if (!lesson || !spec) {

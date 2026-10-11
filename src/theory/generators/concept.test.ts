@@ -3,6 +3,7 @@ import { mulberry32 } from '../rng'
 import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
 import { concept } from './concept'
 import { CONCEPT_BANKS } from './conceptBanks'
+import { GENERATORS, generateRound } from './index'
 
 const BANKS = ['properties', 'dynamics'] as const
 
@@ -63,4 +64,25 @@ test('snapshot com mulberry32(1)', () => {
       "prompt": "Um sinal em forma de ângulo que vai se fechando, embaixo das notas, significa...",
     }
   `)
+})
+
+test.each(['properties', 'dynamics'])('rodada de 10 do banco %s não repete pergunta', (bank) => {
+  for (let seed = 0; seed < 100; seed++) {
+    const round = generateRound({ type: 'concept', params: { bank } }, mulberry32(seed), 10)
+    expect(round).toHaveLength(10)
+    expect(new Set(round.map((q) => q.prompt)).size).toBe(10)
+  }
+})
+
+test('banco menor que a rodada: desiste depois de 50 descartes e completa a rodada', () => {
+  const round = generateRound({ type: 'concept', params: { bank: 'properties' } }, mulberry32(1), 60)
+  expect(round).toHaveLength(60)
+})
+
+test('geradores que não são conceituais seguem o sorteio direto', () => {
+  const params = { timeSignature: '3/4' }
+  const a = generateRound({ type: 'measureFill', params }, mulberry32(5), 10)
+  const rng = mulberry32(5)
+  const b = Array.from({ length: 10 }, () => GENERATORS.measureFill(params, rng))
+  expect(a).toEqual(b)
 })
