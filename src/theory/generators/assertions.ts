@@ -23,3 +23,10 @@ export function expectAnswerPositionsVary(gen: Generator, params: Record<string,
   for (let seed = 1; seed <= n; seed++) positions.add(gen(params, mulberry32(seed)).answer)
   expect(positions.size).toBeGreaterThanOrEqual(3)
 }
+
+/** Pergunta com pauta traz um aria-label próprio que não contém o texto da resposta */
+export function expectHiddenScoreLabel(q: Question): void {
+  if (!q.score) return
+  expect(q.scoreLabel?.trim()).toBeTruthy()
+  expect(q.scoreLabel).not.toContain(q.options[q.answer])
+}

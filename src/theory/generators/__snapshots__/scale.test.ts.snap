@@ -78,6 +78,7 @@ exports[`snapshot com mulberry32(1) 1`] = `
       },
     ],
   },
+  "scoreLabel": "Uma escala com uma nota faltando",
 }
 `;
 
@@ -161,5 +162,6 @@ exports[`snapshot com mulberry32(1) 2`] = `
       },
     ],
   },
+  "scoreLabel": "Uma escala com uma nota faltando",
 }
 `;

@@ -3,7 +3,7 @@ import type { Note } from '../../data/notes'
 import { intervalBetween, intervalName, semitones } from '../music'
 import { mulberry32 } from '../rng'
 import type { Question } from '../types'
-import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
+import { checkQuestionInvariants, expectAnswerPositionsVary, expectHiddenScoreLabel } from './assertions'
 import { interval } from './interval'
 
 function notesOf(q: Question): [Note, Note] {
@@ -114,4 +114,12 @@ test('snapshot com mulberry32(1)', () => {
   expect(interval({ withQuality: true, clef: 'treble' }, mulberry32(1))).toMatchSnapshot()
   expect(interval({ withQuality: false, clef: 'bass' }, mulberry32(1))).toMatchSnapshot()
   expect(interval({ withQuality: true, clef: 'treble', maxNumber: 2 }, mulberry32(1))).toMatchSnapshot()
+})
+
+test.each(CASES)('aria-label da pauta não dá a resposta (%o)', (params) => {
+  for (let seed = 0; seed < 200; seed++) {
+    const q = interval(params, mulberry32(seed))
+    expectHiddenScoreLabel(q)
+    expect(q.scoreLabel).toBe('Duas notas na pauta')
+  }
 })

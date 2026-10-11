@@ -16,5 +16,6 @@ exports[`snapshot com mulberry32(1) 1`] = `
     "elements": [],
     "keySignature": "F",
   },
+  "scoreLabel": "Uma armadura de clave com 1 bemol",
 }
 `;

@@ -43,10 +43,12 @@ function noteDistractors(correct: Note, rng: () => number): string[] {
 }
 
 function finish(prompt: string, elements: ScoreElement[], caption: string | undefined, correct: string, distractors: string[], rng: () => number, explanation: string): Question {
+  const scoreLabel = caption ? 'Uma escala com uma nota faltando' : 'Uma escala na pauta'
   const options = shuffle(rng, [correct, ...distractors])
   return {
     prompt,
     score: caption ? { clef: 'treble', elements, caption } : { clef: 'treble', elements },
+    scoreLabel,
     options,
     answer: options.indexOf(correct),
     explanation,

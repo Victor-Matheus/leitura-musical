@@ -106,6 +106,7 @@ export const noteName: Generator = (params, rng) => {
 
   const options = shuffle(rng, [correct, ...distractors])
   const place = staffPlace(pitch, clef)
+  const sign = pitch.accidental === '#' ? ' com sustenido' : pitch.accidental === 'b' ? ' com bemol' : ''
   let explanation = `${CLEF_NAME[clef]}, a nota ${place} é ${solfege({ step: pitch.step })}.`
   if (pitch.accidental === '#') explanation += ` O sustenido (♯) sobe meio tom: ${correct}.`
   if (pitch.accidental === 'b') explanation += ` O bemol (♭) desce meio tom: ${correct}.`
@@ -116,6 +117,8 @@ export const noteName: Generator = (params, rng) => {
       clef,
       elements: [{ kind: 'note', note: { ...pitch, duration: 'w' } }],
     },
+    // a posição na pauta, sem o nome da nota
+    scoreLabel: `Uma nota${sign} ${place} da clave de ${clef === 'bass' ? 'fá' : 'sol'}`,
     options,
     answer: options.indexOf(correct),
     explanation,

@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import type { Accidental, Step } from '../../data/notes'
 import { pitchToMidi, solfege } from '../music'
 import { mulberry32 } from '../rng'
-import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
+import { checkQuestionInvariants, expectAnswerPositionsVary, expectHiddenScoreLabel } from './assertions'
 import { noteName } from './noteName'
 
 const TREBLE = { clef: 'treble', low: 'C4', high: 'G4' }
@@ -101,6 +101,7 @@ test('snapshot com mulberry32(1)', () => {
           },
         ],
       },
+      "scoreLabel": "Uma nota no 1º espaço da clave de sol",
     }
   `)
   expect(noteName(ACCIDENTALS, mulberry32(1))).toMatchInlineSnapshot(`
@@ -127,6 +128,26 @@ test('snapshot com mulberry32(1)', () => {
           },
         ],
       },
+      "scoreLabel": "Uma nota na 1ª linha suplementar inferior da clave de sol",
     }
   `)
+})
+
+test.each([TREBLE, BASS, ACCIDENTALS])('aria-label da pauta dá a posição, não o nome (%o)', (params) => {
+  for (let seed = 0; seed < 300; seed++) {
+    const q = noteName(params, mulberry32(seed))
+    expectHiddenScoreLabel(q)
+    for (const name of ['Dó', 'Ré', 'Mi', 'Fá', 'Sol', 'Lá', 'Si']) expect(q.scoreLabel).not.toContain(name)
+    expect(q.scoreLabel).toMatch(/^Uma nota( com (sustenido|bemol))? .+ da clave de (sol|fá)$/)
+  }
+})
+
+test('aria-label: Sol4 na clave de sol fica na 2ª linha', () => {
+  for (let seed = 0; seed < 300; seed++) {
+    const q = noteName(TREBLE, mulberry32(seed))
+    if (q.options[q.answer] !== 'Sol') continue
+    expect(q.scoreLabel).toBe('Uma nota na 2ª linha da clave de sol')
+    return
+  }
+  throw new Error('nenhuma semente gerou Sol')
 })

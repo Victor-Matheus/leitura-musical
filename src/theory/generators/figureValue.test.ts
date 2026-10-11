@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { noteBeats } from '../../data/notes'
 import { mulberry32 } from '../rng'
 import type { Question } from '../types'
-import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
+import { checkQuestionInvariants, expectAnswerPositionsVary, expectHiddenScoreLabel } from './assertions'
 import { figureValue } from './figureValue'
 
 const BASIC = { include: ['w', 'h', 'q', '8'], rests: true, dotted: false }
@@ -118,6 +118,7 @@ test('snapshot com mulberry32(1)', () => {
           },
         ],
       },
+      "scoreLabel": "Uma pausa na pauta",
     }
   `)
   expect(figureValue(DOTTED, mulberry32(1))).toMatchInlineSnapshot(`
@@ -145,6 +146,16 @@ test('snapshot com mulberry32(1)', () => {
           },
         ],
       },
+      "scoreLabel": "Uma figura musical na pauta",
     }
   `)
+})
+
+test.each([BASIC, DOTTED])('aria-label da pauta não dá a resposta (%o)', (params) => {
+  for (let seed = 0; seed < 200; seed++) {
+    const q = figureValue(params, mulberry32(seed))
+    expectHiddenScoreLabel(q)
+    const isRest = q.score!.elements[0].kind === 'rest'
+    expect(q.scoreLabel).toBe(isRest ? 'Uma pausa na pauta' : 'Uma figura musical na pauta')
+  }
 })

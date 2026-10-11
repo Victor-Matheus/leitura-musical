@@ -11,6 +11,8 @@ type ScoreViewProps = ScoreBlock & {
   highContrast?: boolean
   /** índice (dentro de `elements`) do elemento destacado com a cor primária */
   highlightIndex?: number
+  /** Substitui a descrição completa (describeScore), ex.: numa pergunta, para não dar a resposta */
+  ariaLabel?: string
 }
 
 const NARROW_QUERY = '(max-width: 479px)'
@@ -53,7 +55,7 @@ function makeResponsive(host: HTMLElement, viewW: number, viewH: number) {
   svgEl.style.overflow = 'visible'
 }
 
-export function ScoreView({ highContrast, highlightIndex, ...score }: ScoreViewProps) {
+export function ScoreView({ highContrast, highlightIndex, ariaLabel, ...score }: ScoreViewProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const maxPerLine = useMaxPerLine()
   const { clef, keySignature, timeSignature, elements } = score
@@ -100,7 +102,7 @@ export function ScoreView({ highContrast, highlightIndex, ...score }: ScoreViewP
   }, [clef, keySignature, timeSignature, elements, maxPerLine, highlightIndex, highContrast])
 
   return (
-    <div role="img" aria-label={describeScore(score)} className="w-full">
+    <div role="img" aria-label={ariaLabel ?? describeScore(score)} className="w-full">
       <div ref={hostRef} className="vf-staff w-full" aria-hidden="true" />
     </div>
   )

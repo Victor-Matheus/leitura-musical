@@ -35,6 +35,8 @@ export interface ExerciseSpec {
 export interface Question {
   prompt: string
   score?: ScoreBlock
+  /** aria-label da pauta que não entrega a resposta (sem ele, a pauta se descreve inteira) */
+  scoreLabel?: string
   /** 3 ou 4 opções, sem repetição */
   options: string[]
   /** Índice da opção correta */

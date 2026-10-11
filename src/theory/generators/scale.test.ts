@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import type { Note } from '../../data/notes'
 import { MAJOR_KEYS, majorScale, pitchToMidi, solfege } from '../music'
 import { mulberry32 } from '../rng'
-import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
+import { checkQuestionInvariants, expectAnswerPositionsVary, expectHiddenScoreLabel } from './assertions'
 import { scale } from './scale'
 
 const ALL = { keys: MAJOR_KEYS.map((k) => k.name) }
@@ -87,4 +87,13 @@ test('só usa tonalidades de params.keys', () => {
 test('snapshot com mulberry32(1)', () => {
   expect(scale(ALL, mulberry32(1))).toMatchSnapshot()
   expect(scale(ALL, mulberry32(2))).toMatchSnapshot()
+})
+
+test.each([ALL, FEW])('aria-label da pauta não dá a resposta (%o)', (params) => {
+  for (let seed = 0; seed < 200; seed++) {
+    const q = scale(params, mulberry32(seed))
+    expectHiddenScoreLabel(q)
+    const missing = q.score!.elements.some((e) => e.kind === 'rest')
+    expect(q.scoreLabel).toBe(missing ? 'Uma escala com uma nota faltando' : 'Uma escala na pauta')
+  }
 })

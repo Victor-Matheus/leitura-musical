@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { noteBeats } from '../../data/notes'
 import { mulberry32 } from '../rng'
 import type { Question } from '../types'
-import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
+import { checkQuestionInvariants, expectAnswerPositionsVary, expectHiddenScoreLabel } from './assertions'
 import { measureFill } from './measureFill'
 
 const FIGURE_BEATS: Record<string, number> = {
@@ -87,6 +87,7 @@ test('snapshot com mulberry32(1)', () => {
         ],
         "timeSignature": "3/4",
       },
+      "scoreLabel": "Um compasso 3/4 incompleto",
     }
   `)
 })
@@ -97,5 +98,13 @@ test.each(SIGNATURES)('%s com dotted: false: sem figura pontuada e invariantes m
     checkQuestionInvariants(q)
     for (const o of q.options) expect(o).not.toContain('pontuada')
     expect(q.explanation).not.toContain('pontuada')
+  }
+})
+
+test.each(SIGNATURES)('%s: aria-label da pauta não dá a resposta', (timeSignature) => {
+  for (let seed = 0; seed < 200; seed++) {
+    const q = measureFill({ timeSignature }, mulberry32(seed))
+    expectHiddenScoreLabel(q)
+    expect(q.scoreLabel).toBe(`Um compasso ${timeSignature} incompleto`)
   }
 })

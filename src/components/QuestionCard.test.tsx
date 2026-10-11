@@ -82,4 +82,18 @@ describe('QuestionCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ré' }))
     expect(screen.getByRole('button', { name: 'Ver resultado' })).toBeTruthy()
   })
+
+  it('usa o scoreLabel da pergunta como aria-label da pauta', () => {
+    const withScore: Question = {
+      ...question,
+      score: { clef: 'treble', elements: [{ kind: 'note', note: { step: 'D', octave: 4, duration: 'w' } }] },
+      scoreLabel: 'Uma nota logo abaixo da pauta da clave de sol',
+    }
+    render(
+      <QuestionCard question={withScore} index={0} total={10} highContrast={false} onAnswer={vi.fn()} onNext={vi.fn()} />,
+    )
+    const img = screen.getByRole('img')
+    expect(img.getAttribute('aria-label')).toBe('Uma nota logo abaixo da pauta da clave de sol')
+    expect(img.getAttribute('aria-label')).not.toContain('Ré')
+  })
 })

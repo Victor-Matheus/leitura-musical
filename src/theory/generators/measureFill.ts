@@ -72,6 +72,7 @@ export const measureFill: Generator = (params, rng) => {
   return {
     prompt: `Qual figura completa este compasso de ${timeSignature}?`,
     score: { clef: 'treble', timeSignature, elements },
+    scoreLabel: `Um compasso ${timeSignature} incompleto`,
     options,
     answer: options.indexOf(correct),
     explanation: `O compasso ${timeSignature} tem ${tempos(total)}. As figuras mostradas somam ${tempos(shown)}. ${missing <= 1 ? 'Falta' : 'Faltam'} ${tempos(missing)}, que é o valor da ${correct}.`,

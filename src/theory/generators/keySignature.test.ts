@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { MAJOR_KEYS } from '../music'
 import { mulberry32 } from '../rng'
-import { checkQuestionInvariants, expectAnswerPositionsVary } from './assertions'
+import { checkQuestionInvariants, expectAnswerPositionsVary, expectHiddenScoreLabel } from './assertions'
 import { keySignature } from './keySignature'
 
 test.each([0, 1, 2, 4])('200 sementes passam pelas invariantes (maxAccidentals %i)', (maxAccidentals) => {
@@ -31,4 +31,16 @@ test('resposta corresponde a MAJOR_KEYS pelo vexKey do score, dentro do limite',
 
 test('snapshot com mulberry32(1)', () => {
   expect(keySignature({ maxAccidentals: 4 }, mulberry32(1))).toMatchSnapshot()
+})
+
+test('aria-label da armadura dá a contagem, não a tonalidade', () => {
+  for (let seed = 0; seed < 200; seed++) {
+    const q = keySignature({ maxAccidentals: 4 }, mulberry32(seed))
+    expectHiddenScoreLabel(q)
+    const key = MAJOR_KEYS.find((k) => k.vexKey === q.score!.keySignature)!
+    for (const k of MAJOR_KEYS) expect(q.scoreLabel).not.toContain(k.name)
+    if (key.sharps) expect(q.scoreLabel).toBe(`Uma armadura de clave com ${key.sharps} ${key.sharps === 1 ? 'sustenido' : 'sustenidos'}`)
+    else if (key.flats) expect(q.scoreLabel).toBe(`Uma armadura de clave com ${key.flats} ${key.flats === 1 ? 'bemol' : 'bemóis'}`)
+    else expect(q.scoreLabel).toBe('Uma armadura de clave sem sustenidos nem bemóis')
+  }
 })

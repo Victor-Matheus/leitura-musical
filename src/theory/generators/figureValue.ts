@@ -59,6 +59,8 @@ export const figureValue: Generator = (params, rng) => {
     element = { kind: 'note', note: { step, octave: step === 'C' ? 5 : 4, duration, ...(dotted ? { dots: 1 as const } : {}) } }
   }
   const score = { clef: 'treble' as const, elements: [element] }
+  const scoreLabel = isRest ? 'Uma pausa na pauta' : 'Uma figura musical na pauta'
+
 
   const askBeats = rng() < 0.5
   if (askBeats) {
@@ -81,6 +83,7 @@ export const figureValue: Generator = (params, rng) => {
     return {
       prompt: `Quantos tempos vale esta ${isRest ? 'pausa' : 'figura'}? (semínima = 1 tempo)`,
       score,
+      scoreLabel,
       options,
       answer: options.indexOf(correct),
       explanation,
@@ -108,6 +111,7 @@ export const figureValue: Generator = (params, rng) => {
   return {
     prompt: `Qual é esta ${isRest ? 'pausa' : 'figura'}?`,
     score,
+    scoreLabel,
     options,
     answer: options.indexOf(correct),
     explanation,

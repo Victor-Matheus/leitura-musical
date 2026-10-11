@@ -39,6 +39,7 @@ function finish(prompt: string, clef: 'treble' | 'bass', a: Note, b: Note, corre
   return {
     prompt,
     score: { clef, elements: [{ kind: 'note', note: a }, { kind: 'note', note: b }] },
+    scoreLabel: 'Duas notas na pauta',
     options,
     answer: options.indexOf(correct),
     explanation,

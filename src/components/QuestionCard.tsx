@@ -34,7 +34,7 @@ export function QuestionCard({ question, index, total, highContrast, onAnswer, o
       </h2>
       {score && (
         <figure className="flex flex-col gap-2">
-          <ScoreView {...score} highContrast={highContrast} />
+          <ScoreView {...score} ariaLabel={question.scoreLabel} highContrast={highContrast} />
           {score.caption && (
             <figcaption className="text-center text-lg font-semibold" style={{ color: 'var(--muted)' }}>
               {score.caption}

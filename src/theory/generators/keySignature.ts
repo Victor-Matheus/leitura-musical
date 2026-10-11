@@ -42,6 +42,13 @@ export const keySignature: Generator = (params, rng) => {
   return {
     prompt: 'Qual tonalidade maior esta armadura indica?',
     score: { clef: 'treble', keySignature: key.vexKey, elements: [] },
+    // a contagem pode, o nome da tonalidade não
+    scoreLabel:
+      key.sharps > 0
+        ? `Uma armadura de clave com ${plural(key.sharps, 'sustenido', 'sustenidos')}`
+        : key.flats > 0
+          ? `Uma armadura de clave com ${plural(key.flats, 'bemol', 'bemóis')}`
+          : 'Uma armadura de clave sem sustenidos nem bemóis',
     options,
     answer: options.indexOf(key.name),
     explanation,
