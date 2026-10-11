@@ -15,10 +15,10 @@ export const figurasPausas: Lesson = {
       kind: 'table',
       head: ['Figura', 'Como é', 'Tempos'],
       rows: [
-        ['Semibreve', 'Cabeça vazada, sem haste', '4'],
+        ['Semibreve', 'Cabeça vazada, sem haste', '4 (contando a semínima como 1 tempo)'],
         ['Mínima', 'Cabeça vazada, com haste', '2'],
         ['Semínima', 'Cabeça cheia, com haste', '1'],
-        ['Colcheia', 'Cabeça cheia, haste e uma bandeirola', '½'],
+        ['Colcheia', 'Cabeça cheia, haste e um colchete (bandeirola)', '½'],
       ],
     },
     {
@@ -29,7 +29,7 @@ export const figurasPausas: Lesson = {
     },
     {
       kind: 'text',
-      text: 'Cada figura vale a metade da anterior: uma semibreve dura o mesmo que 2 mínimas, 4 semínimas ou 8 colcheias. Existe ainda a **semicolcheia**, com duas bandeirolas, que vale metade da colcheia.',
+      text: 'Cada figura vale a metade da anterior: uma semibreve dura o mesmo que 2 mínimas, 4 semínimas ou 8 colcheias. Existe ainda a **semicolcheia**, com dois colchetes, que vale metade da colcheia.',
     },
     {
       kind: 'text',

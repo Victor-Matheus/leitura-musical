@@ -33,7 +33,7 @@ export const escalaMaior: Lesson = {
     },
     {
       kind: 'tip',
-      text: 'Em Fá maior acontece o contrário: o 4º grau precisa ser Si♭, para ficar um semitom entre Lá e Si♭.',
+      text: 'Em Fá maior acontece o contrário: o 4º grau precisa ser Si♭, para ficar um semitom entre Lá e Si♭. Já Ré maior precisa de dois sustenidos: Fá♯ e Dó♯.',
     },
   ],
   exercises: [

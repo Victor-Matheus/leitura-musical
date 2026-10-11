@@ -40,7 +40,7 @@ export const pontoLigadura: Lesson = {
     },
     {
       kind: 'tip',
-      text: 'Se o arco une notas de alturas diferentes, ele não é ligadura de valor. A ligadura de valor sempre liga a mesma nota.',
+      text: 'Se o arco une notas de alturas diferentes, ele é outro sinal: a ligadura de expressão (ou de frase), que pede para tocar as notas sem separá-las. A ligadura de valor sempre liga a mesma nota.',
     },
   ],
   exercises: [{ id: 'pontuadas', title: 'Figuras pontuadas', type: 'figureValue', params: { include: ['w', 'h', 'q'], rests: false, dotted: true } }],

@@ -13,7 +13,7 @@ export const intervalos: Lesson = {
     },
     {
       kind: 'text',
-      text: 'Só o número não basta, porque nem toda 3ª tem o mesmo tamanho. Por isso contamos também os semitons. As 2ª, 3ª, 6ª e 7ª podem ser **maiores** ou **menores**; as 4ª, 5ª e 8ª são **justas**.',
+      text: 'Só o número não basta, porque nem toda 3ª tem o mesmo tamanho. Por isso contamos também os semitons. As 2ª, 3ª, 6ª e 7ª podem ser **maiores** ou **menores**; as 4ª, 5ª e 8ª são **justas**. Só há uma exceção entre as notas naturais: Fá–Si tem 6 semitons, um a mais que a 4ª justa, e por isso é uma **4ª aumentada**. Ao contrário, Si–Fá é uma **5ª diminuta**.',
     },
     {
       kind: 'score',

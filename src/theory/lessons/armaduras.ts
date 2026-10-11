@@ -9,7 +9,7 @@ export const armaduras: Lesson = {
   blocks: [
     {
       kind: 'text',
-      text: 'Para não escrever o mesmo acidente toda hora, colocamos os sustenidos ou bemóis da escala logo depois da clave. Esse grupo de acidentes é a **armadura de clave**. Ela vale para **todas as notas daquele nome**, em qualquer oitava, até o fim da música.',
+      text: 'Para não escrever o mesmo acidente toda hora, colocamos os sustenidos ou bemóis da escala logo depois da clave. Esse grupo de acidentes é a **armadura de clave**. Ela vale para **todas as notas daquele nome**, em qualquer oitava, até o fim da música ou até aparecer uma nova armadura.',
     },
     {
       kind: 'score',
@@ -21,7 +21,7 @@ export const armaduras: Lesson = {
     },
     {
       kind: 'text',
-      text: 'Os acidentes da armadura aparecem sempre na mesma ordem. Sustenidos: **Fá, Dó, Sol, Ré**. Bemóis: **Si, Mi, Lá, Ré**. A armadura indica a **tonalidade**, isto é, a escala em que a música foi feita.',
+      text: 'Os acidentes da armadura aparecem sempre na mesma ordem. Sustenidos: **Fá, Dó, Sol, Ré**. Bemóis: **Si, Mi, Lá, Ré**. A armadura indica a **tonalidade**, isto é, a escala maior em que a música foi feita.',
     },
     {
       kind: 'table',

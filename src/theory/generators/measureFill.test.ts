@@ -90,3 +90,12 @@ test('snapshot com mulberry32(1)', () => {
     }
   `)
 })
+
+test.each(SIGNATURES)('%s com dotted: false: sem figura pontuada e invariantes mantidas', (timeSignature) => {
+  for (let seed = 1; seed <= 200; seed++) {
+    const q = measureFill({ timeSignature, dotted: false }, mulberry32(seed))
+    checkQuestionInvariants(q)
+    for (const o of q.options) expect(o).not.toContain('pontuada')
+    expect(q.explanation).not.toContain('pontuada')
+  }
+})

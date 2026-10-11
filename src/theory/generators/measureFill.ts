@@ -43,9 +43,11 @@ export const measureFill: Generator = (params, rng) => {
   const total = TOTAL_BEATS[timeSignature]
   if (!total) throw new Error(`measureFill: compasso não suportado "${String(params.timeSignature)}"`)
 
+  // dotted: false deixa a semínima pontuada de fora (antes da lição do ponto)
+  const dotted = params.dotted !== false
   const missing = pick(
     rng,
-    [0.5, 1, 1.5, 2].filter((m) => m < total),
+    [0.5, 1, 1.5, 2].filter((m) => m < total && (dotted || m !== 1.5)),
   )
   let remaining = total - missing
   const notes: Note[] = []
@@ -60,7 +62,7 @@ export const measureFill: Generator = (params, rng) => {
   const correct = BY_MISSING[missing]
   const distractors = shuffle(
     rng,
-    CHOICES.filter((c) => c.beats !== missing),
+    CHOICES.filter((c) => c.beats !== missing && (dotted || c.beats !== 1.5)),
   )
     .slice(0, 3)
     .map((c) => c.name)

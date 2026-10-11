@@ -21,7 +21,7 @@ export const compasso: Lesson = {
       rows: [
         ['2/4', '2 semínimas', 'forte, fraco'],
         ['3/4', '3 semínimas', 'forte, fraco, fraco'],
-        ['4/4', '4 semínimas', 'forte, fraco, meio forte, fraco'],
+        ['4/4', '4 semínimas', 'forte, fraco, meio-forte, fraco'],
       ],
     },
     {
@@ -41,8 +41,8 @@ export const compasso: Lesson = {
     },
   ],
   exercises: [
-    { id: 'completar-3-4', title: 'Completar compassos de 3/4', type: 'measureFill', params: { timeSignature: '3/4' } },
-    { id: 'completar-4-4', title: 'Completar compassos de 4/4', type: 'measureFill', params: { timeSignature: '4/4' } },
+    { id: 'completar-3-4', title: 'Completar compassos de 3/4', type: 'measureFill', params: { timeSignature: '3/4', dotted: false } },
+    { id: 'completar-4-4', title: 'Completar compassos de 4/4', type: 'measureFill', params: { timeSignature: '4/4', dotted: false } },
   ],
   reading: {
     id: 'leitura-compasso',

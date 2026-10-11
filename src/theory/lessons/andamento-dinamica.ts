@@ -32,8 +32,8 @@ export const andamentoDinamica: Lesson = {
       rows: [
         ['pp', 'Pianíssimo', 'Muito suave'],
         ['p', 'Piano', 'Suave'],
-        ['mp', 'Mezzo piano', 'Um pouco suave'],
-        ['mf', 'Mezzo forte', 'Um pouco forte'],
+        ['mp', 'Mezzo piano (meio piano)', 'Um pouco suave'],
+        ['mf', 'Mezzo forte (meio forte)', 'Um pouco forte'],
         ['f', 'Forte', 'Forte'],
         ['ff', 'Fortíssimo', 'Muito forte'],
       ],
