@@ -21,6 +21,7 @@ export function Results() {
     )
   }
 
+  const { returnTo } = session
   const total = session.results.length
   const correct = session.results.filter((r) => r.outcome === 'correct').length
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0
@@ -78,7 +79,12 @@ export function Results() {
       </Card>
 
       <div className="flex flex-wrap justify-center gap-4">
-        <Button variant="cta" size="lg" onClick={() => navigate('/')}>
+        {returnTo && (
+          <Button variant="cta" size="lg" onClick={() => navigate(returnTo)}>
+            Voltar
+          </Button>
+        )}
+        <Button variant={returnTo ? 'secondary' : 'cta'} size="lg" onClick={() => navigate('/')}>
           Nova lição
         </Button>
       </div>

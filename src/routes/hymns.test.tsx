@@ -15,11 +15,15 @@ beforeAll(() => {
 /** Mostra o state recebido em /praticar para conferir a navegação. */
 function PracticeProbe() {
   const location = useLocation()
-  const piece = (location.state as { piece?: { title: string; level: number; notes: Note[] } } | null)?.piece
+  const state = location.state as { piece?: { title: string; level: number; notes: Note[] }; returnTo?: string } | null
+  const piece = state?.piece
   return (
-    <p>
-      Praticando {piece?.title} nível {piece?.level} com {piece?.notes.length} notas
-    </p>
+    <>
+      <p>
+        Praticando {piece?.title} nível {piece?.level} com {piece?.notes.length} notas
+      </p>
+      {state?.returnTo && <p>Volta para {state.returnTo}</p>}
+    </>
   )
 }
 
@@ -188,6 +192,29 @@ describe('HymnEditor', () => {
     click('Mi')
     click('Praticar')
     expect(screen.getByText('Praticando Rascunho nível 1 com 1 notas')).toBeTruthy()
+  })
+
+  it('Praticar salva o hino antes e passa o editor como volta', () => {
+    renderAt('/hinos/novo')
+    click('Mi')
+    click('Sol')
+    click('Praticar')
+    const hymns = useHymnStore.getState().hymns
+    expect(hymns).toHaveLength(1)
+    expect(hymns[0].title).toBe('Sem título')
+    expect(hymns[0].notes.map((n) => n.step)).toEqual(['E', 'G'])
+    expect(screen.getByText(`Volta para /hinos/${hymns[0].id}/editar`)).toBeTruthy()
+  })
+
+  it('Praticar num hino existente atualiza sem duplicar', () => {
+    const id = useHymnStore.getState().save({ title: 'Antigo', clef: 'treble', notes: [{ step: 'C', octave: 4, duration: 'q' }] })
+    renderAt(`/hinos/${id}/editar`)
+    click('Ré')
+    click('Praticar')
+    const hymns = useHymnStore.getState().hymns
+    expect(hymns).toHaveLength(1)
+    expect(hymns[0].notes).toHaveLength(2)
+    expect(screen.getByText(`Volta para /hinos/${id}/editar`)).toBeTruthy()
   })
 
   it('Copiar código sem clipboard mostra o código num campo', async () => {

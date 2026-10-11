@@ -100,10 +100,18 @@ function EditorForm({ initial }: { initial?: UserHymn }) {
     setStatus('Hino salvo neste aparelho.')
   }
 
-  const practice = () =>
+  // Praticar salva antes (mesmas regras do Salvar) para não perder o que não foi salvo,
+  // e o resultado da prática volta para este editor.
+  const practice = () => {
+    const id = save({ id: savedId, title: finalTitle, clef, notes })
+    setSavedId(id)
     navigate('/praticar', {
-      state: { piece: { id: `hino-${savedId ?? 'rascunho'}`, title: finalTitle, level: 1, clef, notes } },
+      state: {
+        piece: { id: `hino-${id}`, title: finalTitle, level: 1, clef, notes },
+        returnTo: `/hinos/${id}/editar`,
+      },
     })
+  }
 
   const copyCode = async () => {
     const code = encodeHymn({ title: finalTitle, clef, notes })

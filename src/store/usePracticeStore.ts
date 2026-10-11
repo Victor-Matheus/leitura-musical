@@ -26,6 +26,8 @@ export interface SessionResult {
   results: NoteResult[]
   voiceEnabled: boolean
   durationMs: number
+  /** Para onde voltar ao fim (ex.: o editor do hino ou a lição de teoria). */
+  returnTo?: string
 }
 
 interface State {

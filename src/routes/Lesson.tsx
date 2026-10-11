@@ -64,7 +64,9 @@ export function Lesson() {
           <Button
             variant="primary"
             size="lg"
-            onClick={() => navigate('/praticar', { state: { piece: lesson.reading } })}
+            onClick={() =>
+              navigate('/praticar', { state: { piece: lesson.reading, returnTo: `/teoria/${lesson.id}` } })
+            }
           >
             Leitura métrica
           </Button>

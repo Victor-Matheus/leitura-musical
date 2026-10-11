@@ -11,8 +11,12 @@ import { useProgressStore } from '../store/useProgressStore'
 
 function PraticarProbe() {
   const location = useLocation()
-  const piece = (location.state as { piece?: { title: string } } | null)?.piece
-  return <p>praticar: {piece?.title ?? 'sem peça'}</p>
+  const state = location.state as { piece?: { title: string }; returnTo?: string } | null
+  return (
+    <p>
+      praticar: {state?.piece?.title ?? 'sem peça'} volta: {state?.returnTo ?? 'nenhuma'}
+    </p>
+  )
 }
 
 function renderAt(path: string, seed?: number) {
@@ -77,10 +81,10 @@ describe('telas de teoria', () => {
     expect(useProgressStore.getState().bestScore('compasso', ex.id)).toBe(10)
   })
 
-  it('"Leitura métrica" navega para /praticar com state.piece', () => {
+  it('"Leitura métrica" navega para /praticar com state.piece e volta para a lição', () => {
     const lesson = CURRICULUM.find((l) => l.reading)!
     renderAt(`/teoria/${lesson.id}`)
     fireEvent.click(screen.getByRole('button', { name: 'Leitura métrica' }))
-    expect(screen.getByText(`praticar: ${lesson.reading!.title}`)).toBeTruthy()
+    expect(screen.getByText(`praticar: ${lesson.reading!.title} volta: /teoria/${lesson.id}`)).toBeTruthy()
   })
 })

@@ -25,7 +25,11 @@ const FEEDBACK_COLOR: Record<FeedbackState, HighlightToken> = {
 export function Practice() {
   const navigate = useNavigate()
   const location = useLocation()
-  const piece = (location.state as { piece?: Piece } | null)?.piece
+  const state = location.state as { piece?: Piece; returnTo?: unknown } | null
+  const piece = state?.piece
+  // só caminhos internos
+  const returnTo =
+    typeof state?.returnTo === 'string' && state.returnTo.startsWith('/') ? state.returnTo : undefined
 
   if (!piece) {
     return (
@@ -38,10 +42,10 @@ export function Practice() {
     )
   }
 
-  return <PracticeSession piece={piece} />
+  return <PracticeSession piece={piece} returnTo={returnTo} />
 }
 
-function PracticeSession({ piece }: { piece: Piece }) {
+function PracticeSession({ piece, returnTo }: { piece: Piece; returnTo?: string }) {
   const navigate = useNavigate()
   const settings = usePracticeStore((s) => s.settings)
   const setSettings = usePracticeStore((s) => s.setSettings)
@@ -63,6 +67,7 @@ function PracticeSession({ piece }: { piece: Piece }) {
         // Sem nenhuma nota pontuada (motor indisponível) não há porcentagem a mostrar.
         voiceEnabled: results.some((r) => r.outcome !== null),
         durationMs,
+        returnTo,
       })
       navigate('/resultado')
     },
@@ -158,8 +163,8 @@ function PracticeSession({ piece }: { piece: Piece }) {
         onRestart={session.restart}
       />
 
-      <Button variant="ghost" icon={ArrowLeft} onClick={() => navigate('/')} className="self-center">
-        Voltar às lições
+      <Button variant="ghost" icon={ArrowLeft} onClick={() => navigate(returnTo ?? '/')} className="self-center">
+        {returnTo ? 'Voltar' : 'Voltar às lições'}
       </Button>
     </div>
   )
