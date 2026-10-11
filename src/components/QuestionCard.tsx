@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Question } from '../theory/types'
 import { ScoreView } from './ScoreView'
 import { Button, Card } from './ui'
@@ -17,6 +17,9 @@ export function QuestionCard({ question, index, total, highContrast, onAnswer, o
   const answered = chosen !== null
   const isLast = index + 1 >= total
   const { score } = question
+  // cada cartão novo (ex.: depois de "Próxima") leva o foco ao enunciado
+  const promptRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => promptRef.current?.focus(), [])
 
   const choose = (i: number) => {
     if (answered) return
@@ -29,7 +32,7 @@ export function QuestionCard({ question, index, total, highContrast, onAnswer, o
       <span className="text-base font-semibold" style={{ color: 'var(--muted)' }}>
         {index + 1} / {total}
       </span>
-      <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>
+      <h2 ref={promptRef} tabIndex={-1} className="text-2xl font-bold focus:outline-none" style={{ color: 'var(--text)' }}>
         {question.prompt}
       </h2>
       {score && (

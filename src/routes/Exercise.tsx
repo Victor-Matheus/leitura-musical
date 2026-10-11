@@ -79,6 +79,9 @@ export function Exercise({ seed: seedProp }: { seed?: number }) {
 
   return (
     <div className="flex flex-col gap-4 py-2">
+      <h1 className="text-3xl font-bold" style={{ color: 'var(--text)' }}>
+        {spec.title}
+      </h1>
       <QuestionCard
         key={`${seed}-${index}`}
         question={questions[index]}

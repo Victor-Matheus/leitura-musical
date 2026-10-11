@@ -88,6 +88,19 @@ describe('telas de teoria', () => {
     expect(useProgressStore.getState().bestScore('compasso', ex.id)).toBe(10)
   })
 
+  it('Exercise tem h1 com o título e "Próxima" leva o foco ao novo enunciado', () => {
+    const lesson = getLesson('compasso')!
+    const ex = lesson.exercises[0]
+    renderAt(`/teoria/compasso/exercicio/${ex.id}`, 1)
+    expect(screen.getByRole('heading', { level: 1, name: ex.title })).toBeTruthy()
+    fireEvent.click(screen.getAllByRole('button')[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima' }))
+    expect(screen.getByText('2 / 10')).toBeTruthy()
+    const prompt = screen.getByRole('heading', { level: 2 })
+    expect(prompt.getAttribute('tabindex')).toBe('-1')
+    expect(document.activeElement).toBe(prompt)
+  })
+
   it('"Leitura métrica" navega para /praticar com state.piece e volta para a lição', () => {
     const lesson = CURRICULUM.find((l) => l.reading)!
     renderAt(`/teoria/${lesson.id}`)
