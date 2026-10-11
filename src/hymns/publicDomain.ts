@@ -50,7 +50,7 @@ export const PUBLIC_DOMAIN_HYMNS: PublicDomainHymn[] = [
       clef: 'treble',
       notes: melody(`
         G4:w | G4:h F#4:h | E4:h D4:h | G4:h A4:h | B4:w |
-        B4:w | B4:h A4:h | G4:h C5:h | B4:h A4:h | G4:w |
+        B4:w | B4:h B4:h | A4:h G4:h | C5:h B4:h | A4:w |
         G4:w | A4:h B4:h | A4:h G4:h | E4:h F#4:h | G4:w |
         D5:w | B4:h G4:h | A4:h C5:h | B4:h A4:h | G4:w
       `),

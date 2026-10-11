@@ -56,3 +56,17 @@ describe.each(PUBLIC_DOMAIN_HYMNS)('$id', (h) => {
     for (const note of h.piece.notes.filter((x) => x.step === 'F')) expect(note.accidental).toBe('#')
   })
 })
+
+test('Old Hundredth: alturas das quatro frases', () => {
+  const NAMES: Record<Note['step'], string> = { C: 'Dó', D: 'Ré', E: 'Mi', F: 'Fá', G: 'Sol', A: 'Lá', B: 'Si' }
+  const h = PUBLIC_DOMAIN_HYMNS.find((x) => x.id === 'old-hundredth')!
+  const names = h.piece.notes.map((x) => NAMES[x.step] + (x.accidental === '#' ? '♯' : ''))
+  const phrases = [0, 1, 2, 3].map((i) => names.slice(i * 8, i * 8 + 8).join(' '))
+  expect(names).toHaveLength(32)
+  expect(phrases).toEqual([
+    'Sol Sol Fá♯ Mi Ré Sol Lá Si',
+    'Si Si Si Lá Sol Dó Si Lá',
+    'Sol Lá Si Lá Sol Mi Fá♯ Sol',
+    'Ré Si Sol Lá Dó Si Lá Sol',
+  ])
+})
