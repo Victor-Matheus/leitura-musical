@@ -129,3 +129,24 @@ test('GENERATORS cobre todos os tipos de exercício', () => {
     ['concept', 'figureValue', 'interval', 'keySignature', 'measureFill', 'noteName', 'scale'].sort(),
   )
 })
+
+test('lição 2 cobre a pauta inteira: linhas Mi Sol Si Ré Fá, espaços Fá Lá Dó Mi, exercício Dó4–Fá5', () => {
+  const lesson = getLesson('pauta-clave-sol')!
+  const shown = lesson.blocks
+    .filter((b) => b.kind === 'score')
+    .map((b) => b.elements.flatMap((e) => (e.kind === 'note' ? [`${e.note.step}${e.note.octave}`] : ['|'])).join(' '))
+  expect(shown).toContain('E4 G4 B4 D5 F5 | F4 A4 C5 E5')
+  expect(lesson.exercises[0].params).toMatchObject({ clef: 'treble', low: 'C4', high: 'F5' })
+  expect(lesson.reading!.notes.every((n) => ['C', 'D', 'E', 'F', 'G'].includes(n.step) && n.octave === 4)).toBe(true)
+})
+
+test('lição 7 pede notas só dentro de Dó4–Fá5', () => {
+  const params = getExercise('acidentes', 'notas-alteradas')!.params
+  const midi = (s: string) => {
+    const m = /^([A-G])([#b]?)(\d)$/.exec(s)!
+    const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1] as 'C']
+    return 12 * (Number(m[3]) + 1) + base + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0)
+  }
+  expect(midi(params.low as string)).toBeGreaterThanOrEqual(midi('C4'))
+  expect(midi(params.high as string)).toBeLessThanOrEqual(midi('F5'))
+})

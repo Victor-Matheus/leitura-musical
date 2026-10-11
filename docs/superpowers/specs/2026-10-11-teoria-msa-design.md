@@ -169,7 +169,7 @@ Regras para todos os geradores:
 | # | id | Título | Exercícios | Leitura |
 |---|---|---|---|---|
 | 1 | `som` | O som e suas propriedades | `concept` (bank `properties`) | — |
-| 2 | `pauta-clave-sol` | Pauta, notas e clave de sol | `noteName` (sol, Dó4–Sol4) | Dó–Sol, semínimas |
+| 2 | `pauta-clave-sol` | Pauta, notas e clave de sol | `noteName` (sol, Dó4–Fá5) | Dó–Sol, semínimas |
 | 3 | `clave-fa` | Clave de fá | `noteName` (fá, Sol2–Dó4) | — |
 | 4 | `figuras-pausas` | Figuras de valor e pausas | `figureValue` (w/h/q/8, com pausas) | mínimas e semínimas |
 | 5 | `compasso` | Compasso e fórmula de compasso | `measureFill` (2/4, 3/4, 4/4) | 3/4 com mínima |
