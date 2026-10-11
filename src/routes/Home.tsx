@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Music, Play, Shuffle } from 'lucide-react'
+import { BookOpen, Music, Music2, Play, Shuffle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Badge, Button, Card, IconBox } from '../components/ui'
 import { DRILL_LEVELS, PIECES, makeRandomDrill } from '../data/repertoire'
@@ -69,6 +69,24 @@ export function Home() {
           Começar pela escala
         </Button>
       </Card>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-2xl font-bold text-[var(--text)]">Aprender e criar</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <LessonCard
+            icon={BookOpen}
+            title="Teoria musical"
+            subtitle="12 lições seguindo a progressão de tópicos do MSA, com exercícios"
+            onClick={() => navigate('/teoria')}
+          />
+          <LessonCard
+            icon={Music2}
+            title="Hinos"
+            subtitle="Melodias tradicionais e o editor para os seus hinos"
+            onClick={() => navigate('/hinos')}
+          />
+        </div>
+      </section>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-2xl font-bold text-[var(--text)]">Melodias conhecidas</h2>

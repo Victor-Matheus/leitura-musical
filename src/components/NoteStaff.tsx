@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
+import { Formatter, Renderer, Stave, Voice } from 'vexflow'
 import type { RenderContext } from 'vexflow'
 import type { Note } from '../data/notes'
-import { vexKey } from '../data/notes'
 import type { DisplayMode } from '../store/usePracticeStore'
 import { readToken } from '../theme/readToken'
+import { buildStaveNote } from './scoreLayout'
 
 /** Tokens de cor que podem destacar a nota atual. */
 export type HighlightToken = 'primary' | 'success' | 'error'
@@ -20,15 +20,6 @@ interface NoteStaffProps {
    * as cores são lidas dos tokens (readToken) no momento do desenho, e a pauta é
    * redesenhada quando o alto contraste muda. */
   highContrast: boolean
-}
-
-function buildStaveNote(note: Note, clef: string, color: string): StaveNote {
-  const sn = new StaveNote({ keys: [vexKey(note)], duration: note.duration, clef })
-  if (note.accidental) sn.addModifier(new Accidental(note.accidental), 0)
-  sn.setStyle({ fillStyle: color, strokeStyle: color })
-  // linhas suplementares têm estilo próprio (padrão #444, invisível no alto contraste)
-  sn.setLedgerLineStyle({ fillStyle: color, strokeStyle: color })
-  return sn
 }
 
 /**

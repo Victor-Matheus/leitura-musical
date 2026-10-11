@@ -1,5 +1,5 @@
 import type { Note } from '../data/notes'
-import { durationBeats } from '../data/notes'
+import { noteBeats } from '../data/notes'
 
 export interface Segment {
   fromIndex: number
@@ -28,7 +28,7 @@ export function buildWindows(notes: Note[], bpm: number, segments: Segment[]): (
     const limit = s + 1 < segments.length ? segments[s + 1].fromIndex : notes.length
     let t = segment.t0
     for (let i = segment.fromIndex; i < limit && i < notes.length; i++) {
-      const end = t + durationBeats(notes[i].duration) * beat
+      const end = t + noteBeats(notes[i]) * beat
       if (segment.endedAt !== undefined && segment.endedAt >= t && segment.endedAt < end) break
       windows[i] = { index: i, start: t, end }
       t = end

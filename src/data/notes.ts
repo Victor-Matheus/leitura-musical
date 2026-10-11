@@ -9,6 +9,8 @@ export interface Note {
   octave: number
   accidental?: Accidental
   duration: Duration
+  /** Ponto de aumento: 1 soma metade do valor da figura */
+  dots?: 0 | 1
 }
 
 export interface Piece {
@@ -30,9 +32,10 @@ export const SOLFEGE: Record<Step, string> = {
   B: 'Si',
 }
 
-/** Nome legível da nota em solfejo, ex.: "Dó", "Fá#" */
+/** Nome legível da nota em solfejo, ex.: "Dó", "Fá♯", "Si♭" */
 export function noteName(note: Note): string {
-  return SOLFEGE[note.step] + (note.accidental ?? '')
+  const acc = note.accidental === '#' ? '♯' : note.accidental === 'b' ? '♭' : ''
+  return SOLFEGE[note.step] + acc
 }
 
 /** Chave para o VexFlow, ex.: "c/4", "f#/4" */
@@ -53,6 +56,12 @@ export function durationBeats(duration: Duration): number {
     case '8':
       return 0.5
   }
+}
+
+/** Duração em batidas considerando o ponto de aumento (× 1,5) */
+export function noteBeats(n: { duration: Duration; dots?: 0 | 1 }): number {
+  const base = durationBeats(n.duration)
+  return n.dots === 1 ? base * 1.5 : base
 }
 
 /** Todas as notas naturais usadas no app, em ordem (para sortear) */

@@ -24,6 +24,18 @@ nome (reconhecimento de voz) ou conferindo os nomes ao final da lição.
 - **Acessibilidade**: tamanho de fonte (A / A+ / A++) e alto contraste, sempre no topo;
   foco visível na navegação por teclado.
 
+## Teoria e hinos
+
+- **Teoria musical** (`/teoria`): 12 lições na sequência do MSA, cada uma com exercícios
+  gerados na hora e leitura métrica. A nota de cada exercício fica salva no aparelho.
+- **Hinos** (`/hinos`): melodias tradicionais de domínio público (sem letra) e um editor
+  para digitar os seus hinos, que ficam salvos no `localStorage`.
+- **Conteúdo original e direitos autorais:** os textos das lições são redação própria; o
+  app não reproduz o MSA nem o Hinário. Os hinos embutidos são de domínio público
+  (anteriores a 1900) e não têm letra.
+- **Ordem das lições:** edite `src/theory/curriculum.ts` (a ordem do array `CURRICULUM` é a
+  ordem da trilha).
+
 ## Stack
 
 React + TypeScript + Vite · Tailwind CSS · VexFlow (notação) · Zustand · React Router ·
@@ -61,6 +73,7 @@ pt-BR e o reempacota em `public/models/vosk-pt-small.tar.gz` (só na primeira ve
   base em `ui/` (Button, Card, Badge, IconBox)
 - `src/theme/` — leitura de tokens e teste de contraste
 - `src/index.css` — tokens de cor da identidade visual (incluindo alto contraste)
-- `src/routes/` — Início, Prática, Resultado, Configurações e Diagnóstico
+- `src/theory/` e `src/hymns/` — currículo, geradores de exercícios e hinos
+- `src/routes/` — Início, Prática, Resultado, Configurações, Diagnóstico, Teoria e Hinos
 - `src/store/` — estado/configurações (Zustand + persist)
 - `scripts/` — download do modelo e geração de ícones
