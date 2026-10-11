@@ -57,6 +57,7 @@ export function QuestionCard({ question, index, total, highContrast, onAnswer, o
               variant="secondary"
               size="lg"
               disabled={answered}
+              aria-pressed={chosen === i}
               onClick={() => choose(i)}
               style={style}
               className={isAnswer || isWrongChoice ? '!opacity-100' : ''}

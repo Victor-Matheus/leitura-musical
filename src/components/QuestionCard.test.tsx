@@ -49,12 +49,35 @@ describe('QuestionCard', () => {
     expect(screen.getByText('Certo!')).toBeTruthy()
   })
 
-  it('"Próxima" chama onNext; na última pergunta o botão é "Ver resultado"', () => {
+  it('marca a opção escolhida com aria-pressed', () => {
+    setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Mi' }))
+    expect(screen.getByRole('button', { name: 'Mi' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Dó' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('button', { name: 'Ré' }).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('um segundo clique depois de responder não chama onAnswer de novo', () => {
+    const { onAnswer } = setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Mi' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ré' }))
+    expect(onAnswer).toHaveBeenCalledTimes(1)
+  })
+
+  it('o feedback fica dentro de uma região aria-live', () => {
+    setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Ré' }))
+    expect(screen.getByText('Certo!').closest('[aria-live]')).toBeTruthy()
+  })
+
+  it('"Próxima" chama onNext', () => {
     const { onNext } = setup()
     fireEvent.click(screen.getByRole('button', { name: 'Ré' }))
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }))
     expect(onNext).toHaveBeenCalledTimes(1)
-    cleanup()
+  })
+
+  it('na última pergunta o botão é "Ver resultado"', () => {
     setup({ index: 9 })
     fireEvent.click(screen.getByRole('button', { name: 'Ré' }))
     expect(screen.getByRole('button', { name: 'Ver resultado' })).toBeTruthy()
