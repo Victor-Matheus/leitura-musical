@@ -64,9 +64,9 @@ function toneOrSemitone(clef: 'treble' | 'bass', rng: Rng): Question {
     const explanation =
       st === 2
         ? `De ${solfege(a)} a ${solfege(b)} há 2 semitons, ou seja, 1 tom.`
-        : `De ${solfege(a)} a ${solfege(b)} há só 1 semitom, a menor distância entre duas notas.`
+        : `De ${solfege(a)} a ${solfege(b)} há só 1 semitom, a menor distância entre duas notas diferentes.`
     const others = [TOM, SEMITOM, TOM_E_MEIO].filter((o) => o !== correct)
-    return finish('Da primeira para a segunda nota, temos tom ou semitom?', clef, a, b, correct, others, rng, explanation)
+    return finish('Qual é a distância entre estas duas notas?', clef, a, b, correct, others, rng, explanation)
   }
 }
 
@@ -106,7 +106,10 @@ export const interval: Generator = (params, rng) => {
     for (let i = index; i < index + number; i++) steps.push(NATURAL_STEPS[i % 7])
     const names = steps.map((step) => solfege({ step }))
     let explanation = `De ${solfege(a)} a ${solfege(b)} contamos ${number} notas (${joinPt(names)}): é uma ${info.number}ª.`
-    if (withQuality) explanation += ` Com ${semitones(a, b)} semitons, é ${correct}.`
+    if (withQuality) {
+      const st = semitones(a, b)
+      explanation += ` Com ${st} ${st === 1 ? 'semitom' : 'semitons'}, é ${correct}.`
+    }
     return finish('Qual é o intervalo entre as duas notas?', clef, a, b, correct, distractors, rng, explanation)
   }
 }

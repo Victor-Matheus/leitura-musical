@@ -79,7 +79,7 @@ exports[`snapshot com mulberry32(1) 3`] = `
     "Tom e meio",
     "Semitom",
   ],
-  "prompt": "Da primeira para a segunda nota, temos tom ou semitom?",
+  "prompt": "Qual é a distância entre estas duas notas?",
   "score": {
     "clef": "treble",
     "elements": [

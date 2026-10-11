@@ -98,6 +98,18 @@ test('maxNumber 2: resposta Tom ou Semitom, correta pelos semitons', () => {
   expect(seen).toEqual(new Set(['Tom', 'Semitom']))
 })
 
+test('2ª menor: explicação no singular ("1 semitom")', () => {
+  let checked = 0
+  for (let s = 0; s < 400; s++) {
+    const q = interval({ withQuality: true, clef: 'treble' }, mulberry32(s))
+    if (q.options[q.answer] !== '2ª menor') continue
+    checked++
+    expect(q.explanation).toContain('1 semitom')
+    expect(q.explanation).not.toContain('1 semitons')
+  }
+  expect(checked).toBeGreaterThan(0)
+})
+
 test('snapshot com mulberry32(1)', () => {
   expect(interval({ withQuality: true, clef: 'treble' }, mulberry32(1))).toMatchSnapshot()
   expect(interval({ withQuality: false, clef: 'bass' }, mulberry32(1))).toMatchSnapshot()
