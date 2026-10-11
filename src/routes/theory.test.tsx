@@ -25,7 +25,7 @@ function renderAt(path: string, seed?: number) {
       <Routes>
         <Route path="/teoria" element={<Theory />} />
         <Route path="/teoria/:lessonId" element={<Lesson />} />
-        <Route path="/teoria/:lessonId/:exerciseId" element={<Exercise seed={seed} />} />
+        <Route path="/teoria/:lessonId/exercicio/:exerciseId" element={<Exercise seed={seed} />} />
         <Route path="/praticar" element={<PraticarProbe />} />
       </Routes>
     </MemoryRouter>,
@@ -54,6 +54,13 @@ describe('telas de teoria', () => {
     expect(screen.getByRole('button', { name: new RegExp(lesson.exercises[0].title) })).toBeTruthy()
   })
 
+  it('o botão do exercício abre /teoria/<lição>/exercicio/<exercício>', () => {
+    const lesson = getLesson('compasso')!
+    renderAt('/teoria/compasso')
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(lesson.exercises[0].title) }))
+    expect(screen.getByText('1 / 10')).toBeTruthy()
+  })
+
   it('Lesson com id inválido mostra "Lição não encontrada"', () => {
     renderAt('/teoria/xyz')
     expect(screen.getByText('Lição não encontrada')).toBeTruthy()
@@ -71,7 +78,7 @@ describe('telas de teoria', () => {
     const ex = lesson.exercises[0]
     const rng = mulberry32(1)
     const questions = Array.from({ length: 10 }, () => GENERATORS[ex.type](ex.params, rng))
-    renderAt(`/teoria/compasso/${ex.id}`, 1)
+    renderAt(`/teoria/compasso/exercicio/${ex.id}`, 1)
     for (let i = 0; i < 10; i++) {
       fireEvent.click(screen.getByRole('button', { name: questions[i].options[questions[i].answer] }))
       fireEvent.click(screen.getByRole('button', { name: i === 9 ? 'Ver resultado' : 'Próxima' }))

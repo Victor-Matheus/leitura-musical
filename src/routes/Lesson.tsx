@@ -53,7 +53,7 @@ export function Lesson() {
               variant="secondary"
               size="lg"
               className="flex-wrap justify-between"
-              onClick={() => navigate(`/teoria/${lesson.id}/${ex.id}`)}
+              onClick={() => navigate(`/teoria/${lesson.id}/exercicio/${ex.id}`)}
             >
               <span>{ex.title}</span>
               {score !== undefined && <span style={{ color: 'var(--muted)' }}>Melhor: {score}/10</span>}

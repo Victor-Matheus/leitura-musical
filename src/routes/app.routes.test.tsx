@@ -31,14 +31,17 @@ describe('rotas do App', () => {
     expect(screen.getByRole('link', { name: /hinos/i })).toBeTruthy()
   })
 
-  it('rota de exercício (com e sem o segmento "exercicio") abre o exercício', () => {
+  it('/teoria/<lição>/exercicio/<exercício> abre o exercício', () => {
     const ex = getLesson('compasso')!.exercises[0]
-    for (const path of [`/teoria/compasso/exercicio/${ex.id}`, `/teoria/compasso/${ex.id}`]) {
-      renderAt(path)
-      expect(screen.queryByText('Exercício não encontrado')).toBeNull()
-      expect(screen.getByText('1 / 10')).toBeTruthy()
-      cleanup()
-    }
+    renderAt(`/teoria/compasso/exercicio/${ex.id}`)
+    expect(screen.queryByText('Exercício não encontrado')).toBeNull()
+    expect(screen.getByText('1 / 10')).toBeTruthy()
+  })
+
+  it('o caminho antigo sem "exercicio" não abre mais o exercício', () => {
+    const ex = getLesson('compasso')!.exercises[0]
+    renderAt(`/teoria/compasso/${ex.id}`)
+    expect(screen.queryByText('1 / 10')).toBeNull()
   })
 
   it('a Início tem as entradas de Teoria e Hinos', () => {
