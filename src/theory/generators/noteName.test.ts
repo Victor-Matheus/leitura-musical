@@ -106,13 +106,13 @@ test('snapshot com mulberry32(1)', () => {
   `)
   expect(noteName(ACCIDENTALS, mulberry32(1))).toMatchInlineSnapshot(`
     {
-      "answer": 2,
+      "answer": 3,
       "explanation": "Na clave de sol, a nota na 1ª linha suplementar inferior é Dó.",
       "options": [
-        "Fá",
-        "Lá",
+        "Mi",
+        "Ré♭",
+        "Fá♯",
         "Dó",
-        "Dó♯",
       ],
       "prompt": "Qual é o nome desta nota?",
       "score": {
@@ -150,4 +150,26 @@ test('aria-label: Sol4 na clave de sol fica na 2ª linha', () => {
     return
   }
   throw new Error('nenhuma semente gerou Sol')
+})
+
+test('com acidentes: a letra da resposta nunca é a única mais repetida', () => {
+  const letter = (o: string) => o.replace(/[♯♭]/, '')
+  let withSame = 0
+  let without = 0
+  for (let seed = 0; seed < 300; seed++) {
+    const q = noteName(ACCIDENTALS, mulberry32(seed))
+    const counts = new Map<string, number>()
+    for (const o of q.options) counts.set(letter(o), (counts.get(letter(o)) ?? 0) + 1)
+    const answerLetter = letter(q.options[q.answer])
+    const answerCount = counts.get(answerLetter)!
+    // no máximo uma variante da mesma letra entre os distratores
+    expect(answerCount).toBeLessThanOrEqual(2)
+    const othersMax = Math.max(...[...counts].filter(([l]) => l !== answerLetter).map(([, c]) => c))
+    expect(othersMax).toBeGreaterThanOrEqual(answerCount)
+    if (answerCount === 2) withSame++
+    else without++
+  }
+  // às vezes com variante da mesma letra, às vezes sem
+  expect(withSame).toBeGreaterThan(50)
+  expect(without).toBeGreaterThan(50)
 })

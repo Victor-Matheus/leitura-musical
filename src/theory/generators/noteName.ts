@@ -3,6 +3,7 @@
 import type { Accidental, Step } from '../../data/notes'
 import { pitchToMidi, solfege, type Pitch } from '../music'
 import { shuffle } from '../rng'
+import type { Rng } from '../rng'
 import type { Generator } from '../types'
 
 const STEPS: readonly Step[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
@@ -50,6 +51,49 @@ function staffPlace(p: Pitch, clef: 'treble' | 'bass'): string {
   return `${below ? 'abaixo' : 'acima'} da ${(k - 1) / 2}ª linha suplementar ${side}`
 }
 
+/** Sem acidentes: três outras letras naturais */
+function naturalDistractors(step: Step, rng: Rng): string[] {
+  return shuffle(rng, STEPS.filter((s) => s !== step))
+    .slice(0, 3)
+    .map((s) => solfege({ step: s }))
+}
+
+/**
+ * Com acidentes, a letra repetida não pode denunciar a resposta. Metade das vezes há
+ * uma variante da mesma letra da resposta (ex.: Fá♯ e Fá) e então também um par de
+ * outra letra (ex.: Sol e Sol♯); nas outras, as quatro opções têm letras diferentes.
+ */
+function alteredDistractors(pitch: Pitch, rng: Rng): string[] {
+  const used = new Set([pitchClass(pitch)])
+  const fresh = (c: PitchClass) => !used.has(pitchClass(c))
+  const others = shuffle(rng, STEPS.filter((s) => s !== pitch.step))
+
+  if (rng() < 0.5) {
+    const same = shuffle(rng, variants(pitch.step).filter((v) => v.accidental !== pitch.accidental && fresh(v)))[0]
+    if (same) {
+      used.add(pitchClass(same))
+      for (const step of others) {
+        const pair = shuffle(rng, variants(step).filter(fresh))
+        if (pair.length >= 2) {
+          return [same, pair[0], pair[1]].map((v) => solfege(v))
+        }
+      }
+      used.delete(pitchClass(same))
+    }
+  }
+
+  // uma opção por letra, cada uma natural ou alterada
+  const out: string[] = []
+  for (const step of others) {
+    if (out.length === 3) break
+    const v = shuffle(rng, variants(step).filter(fresh))[0]
+    if (!v) continue
+    used.add(pitchClass(v))
+    out.push(solfege(v))
+  }
+  return out
+}
+
 export const noteName: Generator = (params, rng) => {
   const clef = params.clef as 'treble' | 'bass'
   const accidentals = params.accidentals === true
@@ -77,32 +121,7 @@ export const noteName: Generator = (params, rng) => {
   const correct = solfege(pitch)
 
   // Distratores com classes de altura diferentes entre si e da resposta (nada de enarmônicos)
-  let candidates: PitchClass[]
-  if (accidentals) {
-    const sameLetter = shuffle(
-      rng,
-      variants(pitch.step).filter((v) => v.accidental !== pitch.accidental),
-    )
-    const others = shuffle(
-      rng,
-      STEPS.filter((s) => s !== pitch.step).flatMap(variants),
-    )
-    candidates = [...sameLetter, ...others]
-  } else {
-    candidates = shuffle(
-      rng,
-      STEPS.filter((s) => s !== pitch.step).map((step) => ({ step })),
-    )
-  }
-  const used = new Set([pitchClass(pitch)])
-  const distractors: string[] = []
-  for (const c of candidates) {
-    if (distractors.length === 3) break
-    const pc = pitchClass(c)
-    if (used.has(pc)) continue
-    used.add(pc)
-    distractors.push(solfege(c))
-  }
+  const distractors = accidentals ? alteredDistractors(pitch, rng) : naturalDistractors(pitch.step, rng)
 
   const options = shuffle(rng, [correct, ...distractors])
   const place = staffPlace(pitch, clef)
