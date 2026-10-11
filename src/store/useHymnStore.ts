@@ -65,6 +65,9 @@ export const useHymnStore = create<HymnState>()(
       name: 'leitura-musical-hymns',
       version: 1,
       partialize: (s) => ({ hymns: s.hymns }),
+      // Versão 1 é a atual: o estado salvo passa como está (o merge valida).
+      // Ao subir a versão, converta o estado antigo aqui; nunca descarte os hinos.
+      migrate: (persisted) => persisted as HymnState,
       // estado salvo inválido volta ao inicial, sem lançar
       merge: (persisted, current) => {
         try {

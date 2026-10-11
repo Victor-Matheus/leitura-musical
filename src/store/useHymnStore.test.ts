@@ -95,3 +95,9 @@ test('save corta o título no limite e o hino sobrevive à recarga', async () =>
   await useHymnStore.persist.rehydrate()
   expect(useHymnStore.getState().get(id)?.title).toHaveLength(MAX_HYMN_TITLE)
 })
+
+test('migrate da versão 1 mantém os dados', () => {
+  const migrate = useHymnStore.persist.getOptions().migrate!
+  const hymn = { id: 'x', title: 'T', clef: 'treble', notes: [{ step: 'C', octave: 4, duration: 'q' }], updatedAt: 1 }
+  expect(migrate({ hymns: [hymn] }, 1)).toEqual({ hymns: [hymn] })
+})

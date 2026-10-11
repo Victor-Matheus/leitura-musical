@@ -18,12 +18,12 @@ interface ProgressState {
 const key = (lessonId: string, exerciseId: string) => `${lessonId}/${exerciseId}`
 const isScore = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 10
 
-function parseBest(v: unknown): Record<string, number> | null {
-  if (typeof v !== 'object' || v === null || Array.isArray(v)) return null
+/** Mantém as notas válidas e descarta só as entradas inválidas. */
+function parseBest(v: unknown): Record<string, number> {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return {}
   const out: Record<string, number> = {}
   for (const [k, score] of Object.entries(v)) {
-    if (!isScore(score)) return null
-    out[k] = score
+    if (isScore(score)) out[k] = score
   }
   return out
 }
@@ -44,7 +44,8 @@ export const useProgressStore = create<ProgressState>()(
         const scores = lesson.exercises.map((e) => get().best[key(lesson.id, e.id)])
         const passed = scores.filter((s) => s !== undefined && s >= PASS_SCORE).length
         if (lesson.exercises.length > 0 && passed === lesson.exercises.length) return 'concluida'
-        return passed > 0 ? 'andamento' : 'novo'
+        // qualquer nota gravada, mesmo abaixo de PASS_SCORE, já conta como em andamento
+        return scores.some((s) => s !== undefined) ? 'andamento' : 'novo'
       },
       reset: () => set({ best: {} }),
     }),
@@ -52,11 +53,13 @@ export const useProgressStore = create<ProgressState>()(
       name: 'leitura-musical-progress',
       version: 1,
       partialize: (s) => ({ best: s.best }),
-      // estado salvo inválido volta ao inicial, sem lançar
+      // Versão 1 é a atual: o estado salvo passa como está (o merge valida).
+      // Ao subir a versão, converta o estado antigo aqui; nunca descarte o progresso.
+      migrate: (persisted) => persisted as ProgressState,
+      // entradas inválidas são descartadas, sem lançar
       merge: (persisted, current) => {
         try {
-          const best = parseBest((persisted as { best?: unknown } | null)?.best)
-          return best ? { ...current, best } : { ...current, best: {} }
+          return { ...current, best: parseBest((persisted as { best?: unknown } | null)?.best) }
         } catch {
           return { ...current, best: {} }
         }
