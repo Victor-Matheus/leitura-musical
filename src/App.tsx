@@ -6,10 +6,15 @@ import { AccessibilityBar } from './components/AccessibilityBar'
 import { SplashScreen } from './components/SplashScreen'
 import { usePracticeStore } from './store/usePracticeStore'
 import { Diagnostico } from './routes/Diagnostico'
+import { Exercise } from './routes/Exercise'
 import { Home } from './routes/Home'
+import { Hymns } from './routes/Hymns'
+import { HymnEditor } from './routes/HymnEditor'
+import { Lesson } from './routes/Lesson'
 import { Practice } from './routes/Practice'
 import { Results } from './routes/Results'
 import { Settings } from './routes/Settings'
+import { Theory } from './routes/Theory'
 
 export default function App() {
   const { fontSize, highContrast } = usePracticeStore((s) => s.settings)
@@ -67,6 +72,14 @@ export default function App() {
             <Route path="/resultado" element={<Results />} />
             <Route path="/configuracoes" element={<Settings />} />
             <Route path="/diagnostico" element={<Diagnostico />} />
+            <Route path="/teoria" element={<Theory />} />
+            <Route path="/teoria/:lessonId" element={<Lesson />} />
+            <Route path="/teoria/:lessonId/exercicio/:exerciseId" element={<Exercise />} />
+            {/* Lesson.tsx navega sem o segmento "exercicio"; mantém os dois caminhos. */}
+            <Route path="/teoria/:lessonId/:exerciseId" element={<Exercise />} />
+            <Route path="/hinos" element={<Hymns />} />
+            <Route path="/hinos/novo" element={<HymnEditor />} />
+            <Route path="/hinos/:id/editar" element={<HymnEditor />} />
           </Routes>
         </main>
 
