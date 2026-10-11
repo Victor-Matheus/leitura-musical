@@ -136,10 +136,14 @@ export function buildElements(elements: ScoreElement[], opts: BuildOptions): Vex
   // posição da pausa no meio da pauta (linha do Si4 na clave de sol, Ré3 na de fá)
   const restKey = opts.clef === 'bass' ? 'd/3' : 'b/4'
 
+  // Acidentes já escritos no compasso, por posição na pauta (letra + oitava); a barra zera.
+  let inMeasure: Partial<Record<string, string>> = {}
+
   return elements.map((e, i) => {
     const color = i === opts.highlightIndex ? opts.highlightColor : opts.color
     const style = { fillStyle: color, strokeStyle: color }
     if (e.kind === 'bar') {
+      inMeasure = {}
       const bar = new BarNote()
       bar.setStyle(style)
       return bar
@@ -154,11 +158,14 @@ export function buildElements(elements: ScoreElement[], opts: BuildOptions): Vex
       const { note } = e
       dots = note.dots
       sn = new StaveNote({ keys: [vexKey(note)], duration: vexDuration(note.duration, dots), clef: opts.clef })
-      if (note.accidental && inKey[note.step] !== note.accidental) {
-        sn.addModifier(new Accidental(note.accidental), 0)
-      } else if (!note.accidental && inKey[note.step]) {
-        // sem acidente = natural: anula o ♯/♭ da armadura
-        sn.addModifier(new Accidental('n'), 0)
+      // o que vale nesta posição agora: acidente anterior no compasso, senão a armadura;
+      // sem acidente = natural ('n'), que pode precisar de ♮ para anular um ♯/♭
+      const place = `${note.step}${note.octave}`
+      const current = inMeasure[place] ?? inKey[note.step] ?? 'n'
+      const wanted = note.accidental ?? 'n'
+      if (wanted !== current) {
+        sn.addModifier(new Accidental(wanted), 0)
+        inMeasure[place] = wanted
       }
       // linhas suplementares têm estilo próprio (padrão #444, invisível no alto contraste)
       sn.setLedgerLineStyle(style)

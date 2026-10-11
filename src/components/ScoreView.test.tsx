@@ -173,6 +173,41 @@ describe('buildElements', () => {
   })
 })
 
+describe('buildElements: acidentes dentro do compasso', () => {
+  const opts = { clef: 'treble' as const, color: '#000', highlightColor: '#f00' }
+  const n = (step: 'F' | 'G' | 'B', accidental?: '#' | 'b', octave = 4): ScoreElement => ({
+    kind: 'note',
+    note: { step, octave, duration: 'q', ...(accidental ? { accidental } : {}) },
+  })
+  const accs = (els: ReturnType<typeof buildElements>) =>
+    els.map((e) => (e.getModifiersByType('Accidental') as Accidental[]).map((a) => a.type).join(''))
+
+  it('natural depois de Fá♯ no mesmo compasso ganha ♮; ♯ repetido não é redesenhado', () => {
+    const els = buildElements([n('F', '#'), n('F', '#'), n('F'), n('F')], opts)
+    expect(accs(els)).toEqual(['#', '', 'n', ''])
+  })
+
+  it('a barra zera os acidentes do compasso', () => {
+    const els = buildElements([n('F', '#'), { kind: 'bar' }, n('F', '#'), n('F'), { kind: 'bar' }, n('F')], opts)
+    expect(accs(els)).toEqual(['#', '', '#', 'n', '', ''])
+  })
+
+  it('com armadura: ♮ no compasso e o ♯ volta a ser escrito depois', () => {
+    const els = buildElements([n('F'), n('F', '#'), { kind: 'bar' }, n('F', '#')], { ...opts, keySignature: 'G' })
+    expect(accs(els)).toEqual(['n', '#', '', ''])
+  })
+
+  it('outra oitava da mesma letra não herda o acidente', () => {
+    const els = buildElements([n('F', '#', 4), n('F', undefined, 5)], opts)
+    expect(accs(els)).toEqual(['#', ''])
+  })
+
+  it('bemol seguido de sustenido na mesma nota escreve os dois', () => {
+    const els = buildElements([n('B', 'b'), n('B', '#'), n('B', '#')], opts)
+    expect(accs(els)).toEqual(['b', '#', ''])
+  })
+})
+
 describe('buildStaveNote (prática por voz)', () => {
   it('desenha o ponto da mínima pontuada na cor da nota', () => {
     const sn = buildStaveNote({ step: 'G', octave: 4, duration: 'h', dots: 1 }, 'treble', '#123456')
