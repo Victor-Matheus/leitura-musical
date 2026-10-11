@@ -73,6 +73,17 @@ describe('Hymns', () => {
     expect(screen.getByText('Meu hino')).toBeTruthy()
   })
 
+  it('importa um código com título vazio como "Sem título"', () => {
+    renderAt('/hinos')
+    const code = encodeHymn({ title: '   ', clef: 'treble', notes: [{ step: 'C', octave: 4, duration: 'q' }] })
+    fireEvent.change(screen.getByLabelText('Código do hino'), { target: { value: code } })
+    click('Importar')
+    const hymns = useHymnStore.getState().hymns
+    expect(hymns).toHaveLength(1)
+    expect(hymns[0].title).toBe('Sem título')
+    expect(screen.getByText('“Sem título” foi importado.')).toBeTruthy()
+  })
+
   it('código inválido mostra o erro e não cria hino', () => {
     renderAt('/hinos')
     fireEvent.change(screen.getByLabelText('Código do hino'), { target: { value: 'LM1:lixo!' } })

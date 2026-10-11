@@ -25,9 +25,10 @@ function ImportCode() {
   const importCode = () => {
     try {
       const data = decodeHymn(code)
-      save(data)
+      const title = data.title.trim() || 'Sem título'
+      save({ ...data, title })
       setCode('')
-      setMessage({ ok: true, text: `“${data.title || 'Sem título'}” foi importado.` })
+      setMessage({ ok: true, text: `“${title}” foi importado.` })
     } catch {
       setMessage({ ok: false, text: 'Código inválido ou de versão diferente' })
     }
