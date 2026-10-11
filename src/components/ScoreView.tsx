@@ -3,7 +3,7 @@ import { Formatter, Renderer, Stave, Voice } from 'vexflow'
 import type { RenderContext } from 'vexflow'
 import { readToken } from '../theme/readToken'
 import type { ScoreBlock } from '../theory/types'
-import { buildElements, describeScore, splitIntoLines } from './scoreLayout'
+import { buildElements, describeScore, highlightPerLine, splitIntoLines } from './scoreLayout'
 
 type ScoreViewProps = ScoreBlock & {
   /** VexFlow desenha com estilo inline: as cores vêm dos tokens no momento do desenho,
@@ -66,13 +66,7 @@ export function ScoreView({ highContrast, highlightIndex, ...score }: ScoreViewP
     const highlightColor = readToken('primary')
 
     const lines = splitIntoLines(elements, maxPerLine)
-    // a quebra mantém a ordem das notas/pausas (só mexe nas barras): o destaque é a
-    // n-ésima nota/pausa, contada sem as barras
-    const target =
-      highlightIndex !== undefined && elements[highlightIndex]?.kind !== 'bar'
-        ? elements.slice(0, highlightIndex).filter((e) => e.kind !== 'bar').length
-        : -1
-    let offset = 0
+    const highlights = highlightPerLine(elements, lines, highlightIndex)
     const W = maxPerLine === 8 ? 400 : 720
     const H = TOP + lines.length * LINE_HEIGHT
 
@@ -88,13 +82,12 @@ export function ScoreView({ highContrast, highlightIndex, ...score }: ScoreViewP
       drawStave(stave, ctx, textColor)
       if (!line.length) return
 
-      const ordinals = line.map((e) => (e.kind === 'bar' ? -1 : offset++))
       const notes = buildElements(line, {
         clef,
         keySignature,
         color: textColor,
         highlightColor,
-        highlightIndex: target >= 0 ? ordinals.indexOf(target) : undefined,
+        highlightIndex: highlights[li],
       })
       const voice = new Voice().setStrict(false)
       voice.addTickables(notes)

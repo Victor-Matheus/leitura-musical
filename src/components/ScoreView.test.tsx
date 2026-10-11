@@ -1,8 +1,9 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import type { Accidental } from 'vexflow'
 import type { ScoreBlock, ScoreElement } from '../theory/types'
 import { ScoreView } from './ScoreView'
-import { buildElements, describeScore, splitIntoLines, vexDuration } from './scoreLayout'
+import { buildElements, describeScore, highlightPerLine, splitIntoLines, vexDuration } from './scoreLayout'
 
 // O VexFlow mede texto num canvas; o jsdom não tem canvas e avisa a cada chamada.
 // Devolver null (o mesmo que o jsdom devolve) só silencia o aviso.
@@ -82,6 +83,31 @@ describe('splitIntoLines', () => {
   })
 })
 
+describe('highlightPerLine', () => {
+  it('leva o destaque para a nota certa na segunda linha', () => {
+    const el = (step: 'C' | 'D' | 'E' | 'F' | 'G'): ScoreElement => ({
+      kind: 'note',
+      note: { step, octave: 4, duration: 'q' },
+    })
+    // compassos de 3 notas, linhas de no máximo 4 → uma linha por compasso
+    const elements: ScoreElement[] = [el('C'), el('D'), el('E'), { kind: 'bar' }, el('F'), el('G'), el('C')]
+    const lines = splitIntoLines(elements, 4)
+    expect(lines).toHaveLength(2)
+    // índice 5 = Sol, a 2ª nota da 2ª linha
+    const per = highlightPerLine(elements, lines, 5)
+    expect(per).toEqual([undefined, 1])
+    expect(lines[1][per[1]!]).toBe(elements[5])
+  })
+
+  it('não destaca nada quando o índice é uma barra ou não existe', () => {
+    const elements: ScoreElement[] = [{ kind: 'rest', duration: 'q' }, { kind: 'bar' }, { kind: 'rest', duration: 'q' }]
+    const lines = splitIntoLines(elements, 8)
+    expect(highlightPerLine(elements, lines, 1)).toEqual([undefined])
+    expect(highlightPerLine(elements, lines)).toEqual([undefined])
+    expect(highlightPerLine(elements, lines, 2)).toEqual([2])
+  })
+})
+
 describe('buildElements', () => {
   it('passa a clave de fá para a StaveNote', () => {
     const [sn] = buildElements([{ kind: 'note', note: { step: 'C', octave: 4, duration: 'q' } }], {
@@ -107,6 +133,29 @@ describe('buildElements', () => {
     expect(rest.getDuration()).toBe('h')
     expect(rest.isRest()).toBe(true)
     expect(dotted.getModifiersByType('Dot')).toHaveLength(1)
+  })
+
+  it('põe a pausa no meio da pauta: d/3 na clave de fá, b/4 na de sol', () => {
+    const rest: ScoreElement = { kind: 'rest', duration: 'q' }
+    const opts = { color: '#000', highlightColor: '#f00' }
+    const [bass] = buildElements([rest], { ...opts, clef: 'bass' })
+    const [treble] = buildElements([rest], { ...opts, clef: 'treble' })
+    expect(bass.getKeys()).toEqual(['d/3'])
+    expect(treble.getKeys()).toEqual(['b/4'])
+  })
+
+  it('põe bequadro na nota natural que a armadura alteraria', () => {
+    const [fNatural, gNatural] = buildElements(
+      [
+        { kind: 'note', note: { step: 'F', octave: 4, duration: 'q' } },
+        { kind: 'note', note: { step: 'G', octave: 4, duration: 'q' } },
+      ],
+      { clef: 'treble', keySignature: 'D', color: '#000', highlightColor: '#f00' },
+    )
+    const accs = fNatural.getModifiersByType('Accidental') as Accidental[]
+    expect(accs).toHaveLength(1)
+    expect(accs[0].type).toBe('n')
+    expect(gNatural.getModifiersByType('Accidental')).toHaveLength(0)
   })
 
   it('não repete o acidente que já está na armadura', () => {

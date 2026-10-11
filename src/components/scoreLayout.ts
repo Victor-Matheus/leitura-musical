@@ -88,6 +88,28 @@ export function splitIntoLines(elements: ScoreElement[], maxPerLine: number): Sc
   return lines
 }
 
+/**
+ * Converte o índice destacado (dentro de `elements`) no índice de cada linha.
+ * A quebra mantém a ordem das notas/pausas (só mexe nas barras), então o destaque
+ * é a n-ésima nota/pausa contada sem as barras. Linhas sem o destaque recebem undefined.
+ */
+export function highlightPerLine(
+  elements: ScoreElement[],
+  lines: ScoreElement[][],
+  highlightIndex?: number,
+): (number | undefined)[] {
+  const target =
+    highlightIndex !== undefined && elements[highlightIndex] && elements[highlightIndex].kind !== 'bar'
+      ? elements.slice(0, highlightIndex).filter((e) => e.kind !== 'bar').length
+      : -1
+  let offset = 0
+  return lines.map((line) => {
+    const ordinals = line.map((e) => (e.kind === 'bar' ? -1 : offset++))
+    const local = target >= 0 ? ordinals.indexOf(target) : -1
+    return local >= 0 ? local : undefined
+  })
+}
+
 export interface BuildOptions {
   clef: 'treble' | 'bass'
   keySignature?: string
@@ -134,6 +156,9 @@ export function buildElements(elements: ScoreElement[], opts: BuildOptions): Vex
       sn = new StaveNote({ keys: [vexKey(note)], duration: vexDuration(note.duration, dots), clef: opts.clef })
       if (note.accidental && inKey[note.step] !== note.accidental) {
         sn.addModifier(new Accidental(note.accidental), 0)
+      } else if (!note.accidental && inKey[note.step]) {
+        // sem acidente = natural: anula o ♯/♭ da armadura
+        sn.addModifier(new Accidental('n'), 0)
       }
       // linhas suplementares têm estilo próprio (padrão #444, invisível no alto contraste)
       sn.setLedgerLineStyle(style)
