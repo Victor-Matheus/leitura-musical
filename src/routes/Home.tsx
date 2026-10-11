@@ -76,7 +76,7 @@ export function Home() {
           <LessonCard
             icon={BookOpen}
             title="Teoria musical"
-            subtitle="12 lições na sequência do MSA, com exercícios"
+            subtitle="12 lições seguindo a progressão de tópicos do MSA, com exercícios"
             onClick={() => navigate('/teoria')}
           />
           <LessonCard

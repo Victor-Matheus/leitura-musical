@@ -15,7 +15,7 @@ export function Theory() {
           Teoria musical
         </h1>
         <p className="text-lg" style={{ color: 'var(--muted)' }}>
-          Lições na sequência do MSA, com textos próprios do app.
+          Lições seguindo a progressão de tópicos do MSA, com textos próprios do app.
         </p>
       </header>
       <ul className="flex flex-col gap-4">
