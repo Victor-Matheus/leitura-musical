@@ -1,0 +1,105 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshot com mulberry32(1) 1`] = `
+{
+  "answer": 1,
+  "explanation": "De Dó a Lá contamos 6 notas (Dó, Ré, Mi, Fá, Sol e Lá): é uma 6ª. Com 9 semitons, é 6ª maior.",
+  "options": [
+    "5ª justa",
+    "6ª maior",
+    "6ª menor",
+    "4ª justa",
+  ],
+  "prompt": "Qual é o intervalo entre as duas notas?",
+  "score": {
+    "clef": "treble",
+    "elements": [
+      {
+        "kind": "note",
+        "note": {
+          "duration": "w",
+          "octave": 4,
+          "step": "C",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "w",
+          "octave": 4,
+          "step": "A",
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`snapshot com mulberry32(1) 2`] = `
+{
+  "answer": 1,
+  "explanation": "De Mi a Dó contamos 6 notas (Mi, Fá, Sol, Lá, Si e Dó): é uma 6ª.",
+  "options": [
+    "4ª",
+    "6ª",
+    "8ª",
+    "5ª",
+  ],
+  "prompt": "Qual é o intervalo entre as duas notas?",
+  "score": {
+    "clef": "bass",
+    "elements": [
+      {
+        "kind": "note",
+        "note": {
+          "duration": "w",
+          "octave": 2,
+          "step": "E",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "w",
+          "octave": 3,
+          "step": "C",
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`snapshot com mulberry32(1) 3`] = `
+{
+  "answer": 0,
+  "explanation": "De Dó a Ré há 2 semitons, ou seja, 1 tom.",
+  "options": [
+    "Tom",
+    "Tom e meio",
+    "Semitom",
+  ],
+  "prompt": "Da primeira para a segunda nota, temos tom ou semitom?",
+  "score": {
+    "clef": "treble",
+    "elements": [
+      {
+        "kind": "note",
+        "note": {
+          "duration": "w",
+          "octave": 5,
+          "step": "C",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "w",
+          "octave": 5,
+          "step": "D",
+        },
+      },
+    ],
+  },
+}
+`;

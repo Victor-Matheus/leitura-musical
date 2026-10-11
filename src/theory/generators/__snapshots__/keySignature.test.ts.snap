@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshot com mulberry32(1) 1`] = `
+{
+  "answer": 1,
+  "explanation": "Com 1 bemol (Si♭), a tonalidade é Fá maior.",
+  "options": [
+    "Mi♭ maior",
+    "Fá maior",
+    "Ré maior",
+    "Lá♭ maior",
+  ],
+  "prompt": "Qual tonalidade maior esta armadura indica?",
+  "score": {
+    "clef": "treble",
+    "elements": [],
+    "keySignature": "F",
+  },
+}
+`;

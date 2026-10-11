@@ -1,0 +1,165 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshot com mulberry32(1) 1`] = `
+{
+  "answer": 2,
+  "explanation": "A escala de Fá maior é Fá, Sol, Lá, Si♭, Dó, Ré, Mi, Fá. Ela segue o padrão tom, tom, semitom, tom, tom, tom, semitom. O 5º grau é Dó.",
+  "options": [
+    "Si",
+    "Dó♯",
+    "Dó",
+    "Ré",
+  ],
+  "prompt": "Qual nota falta na escala de Fá maior?",
+  "score": {
+    "caption": "Fá – Sol – Lá – Si♭ – ? – Ré – Mi – Fá",
+    "clef": "treble",
+    "elements": [
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 4,
+          "step": "F",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 4,
+          "step": "G",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 4,
+          "step": "A",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "accidental": "b",
+          "duration": "q",
+          "octave": 4,
+          "step": "B",
+        },
+      },
+      {
+        "duration": "q",
+        "kind": "rest",
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "D",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "E",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "F",
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`snapshot com mulberry32(1) 2`] = `
+{
+  "answer": 1,
+  "explanation": "A escala de Si♭ maior é Si♭, Dó, Ré, Mi♭, Fá, Sol, Lá, Si♭. Ela segue o padrão tom, tom, semitom, tom, tom, tom, semitom. O 3º grau é Ré.",
+  "options": [
+    "Dó",
+    "Ré",
+    "Ré♯",
+    "Ré♭",
+  ],
+  "prompt": "Qual nota falta na escala de Si♭ maior?",
+  "score": {
+    "caption": "Si♭ – Dó – ? – Mi♭ – Fá – Sol – Lá – Si♭",
+    "clef": "treble",
+    "elements": [
+      {
+        "kind": "note",
+        "note": {
+          "accidental": "b",
+          "duration": "q",
+          "octave": 4,
+          "step": "B",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "C",
+        },
+      },
+      {
+        "duration": "q",
+        "kind": "rest",
+      },
+      {
+        "kind": "note",
+        "note": {
+          "accidental": "b",
+          "duration": "q",
+          "octave": 5,
+          "step": "E",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "F",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "G",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "duration": "q",
+          "octave": 5,
+          "step": "A",
+        },
+      },
+      {
+        "kind": "note",
+        "note": {
+          "accidental": "b",
+          "duration": "q",
+          "octave": 5,
+          "step": "B",
+        },
+      },
+    ],
+  },
+}
+`;
