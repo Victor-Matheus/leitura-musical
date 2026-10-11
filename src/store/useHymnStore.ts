@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Note } from '../data/notes'
-import { parseHymnData } from '../hymns/codec'
+import { MAX_HYMN_NOTES, MAX_HYMN_TITLE, parseHymnData } from '../hymns/codec'
 
 export { MAX_HYMN_NOTES } from '../hymns/codec'
 
@@ -15,7 +15,10 @@ export interface UserHymn {
 
 interface HymnState {
   hymns: UserHymn[]
-  /** Cria (sem id) ou atualiza (com id). Retorna o id. */
+  /**
+   * Cria (sem id) ou atualiza (com id). Retorna o id. O título é cortado em
+   * MAX_HYMN_TITLE; mais de MAX_HYMN_NOTES notas lança Error('too-many-notes').
+   */
   save: (h: Omit<UserHymn, 'id' | 'updatedAt'> & { id?: string }) => string
   remove: (id: string) => void
   get: (id: string) => UserHymn | undefined
@@ -26,13 +29,14 @@ function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-function parseHymns(v: unknown): UserHymn[] | null {
-  if (!Array.isArray(v)) return null
+/** Mantém os hinos válidos e descarta só os itens inválidos. */
+function parseHymns(v: unknown): UserHymn[] {
+  if (!Array.isArray(v)) return []
   const out: UserHymn[] = []
   for (const item of v) {
     const data = parseHymnData(item)
     const { id, updatedAt } = (item ?? {}) as { id?: unknown; updatedAt?: unknown }
-    if (!data || typeof id !== 'string' || typeof updatedAt !== 'number') return null
+    if (!data || typeof id !== 'string' || typeof updatedAt !== 'number') continue
     out.push({ id, ...data, updatedAt })
   }
   return out
@@ -43,6 +47,8 @@ export const useHymnStore = create<HymnState>()(
     (set, get) => ({
       hymns: [],
       save: ({ id, title, clef, notes }) => {
+        if (notes.length > MAX_HYMN_NOTES) throw new Error('too-many-notes')
+        title = title.slice(0, MAX_HYMN_TITLE)
         const hymnId = id ?? newId()
         const hymn: UserHymn = { id: hymnId, title, clef, notes, updatedAt: Date.now() }
         set((s) =>
@@ -62,8 +68,7 @@ export const useHymnStore = create<HymnState>()(
       // estado salvo inválido volta ao inicial, sem lançar
       merge: (persisted, current) => {
         try {
-          const hymns = parseHymns((persisted as { hymns?: unknown } | null)?.hymns)
-          return { ...current, hymns: hymns ?? [] }
+          return { ...current, hymns: parseHymns((persisted as { hymns?: unknown } | null)?.hymns) }
         } catch {
           return { ...current, hymns: [] }
         }

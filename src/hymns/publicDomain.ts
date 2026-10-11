@@ -57,9 +57,10 @@ export const PUBLIC_DOMAIN_HYMNS: PublicDomainHymn[] = [
     },
   },
   {
-    // Melodia tradicional americana "New Britain", publicada em 1829
-    // (Virginia Harmony, de Carrell e Clayton). Sem ligaduras, as notas longas do
-    // fim de cada frase ficam como mínima.
+    // Melodia tradicional americana "New Britain", impressa pela primeira vez em 1829
+    // em Columbian Harmony (Charles H. Spilman e Benjamin Shaw, Cincinnati).
+    // Versão de leitura com 14 compassos em vez de 16: sem ligaduras, as notas longas
+    // (Ré5 no meio e Sol4 no fim, 5 tempos no original) ficam como mínima.
     id: 'new-britain',
     title: 'New Britain',
     origin: 'Melodia tradicional americana',
